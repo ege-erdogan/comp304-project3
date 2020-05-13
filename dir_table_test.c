@@ -32,18 +32,17 @@ void init(DirTable *dt) {
 }
 
 bool should_enlarge(DirTable *dt) {
-  return dt->size == dt->cap - 1;
+  return dt->size == dt->cap - 2;
 }
 
 void enlarge(DirTable *dt) {
   printf("Increasing capacity\n");
-  // DirEnt *new_array[dt->cap * 2];
-  // for (int i = 0; i < dt->size; i++) {
-  //   new_array[i] = dt->array[i];
-  // }
-  // dt->array = new_array[0];
-  realloc(dt->array, dt->cap * 2);
-  dt->cap *= 2;
+  DirEnt *new_array[dt->cap * 2];
+  for (int i = 0; i < dt->size; i++) {
+    new_array[i] = dt->array[i];
+  }
+  DirTable temp = {dt->cap * 2, dt->size, new_array};
+  dt = &temp;
 }
 
 void insert(DirTable *dt, DirEnt *entry) {
@@ -51,6 +50,7 @@ void insert(DirTable *dt, DirEnt *entry) {
     enlarge(dt);
   }
   dt->array[dt->size + 1] = entry;
+  dt->size++;
 }
 
 DirEnt *find_by_id(DirTable *dt, int target) {
@@ -70,8 +70,11 @@ void print_array(DirTable *dt) {
 }
 
 int main() {
+  printf("merhaba\n");
   DirTable *table = malloc(sizeof(*table));
+  printf("merhaba\n");
   for (int i = 0; i < 100; i++) {
+    printf("merhaba\n");
     DirEnt *entry = malloc(sizeof(*entry));
     entry->file_id = 1;
     entry->size = 10;
