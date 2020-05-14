@@ -17,7 +17,7 @@ public class DirEnt {
 
   // returns the index of the final block allocated to the file
   public int getEndIndex() {
-    return start + length + 1;
+    return start + length - 1;
   }
 
 }

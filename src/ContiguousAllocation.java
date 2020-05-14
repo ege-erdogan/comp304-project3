@@ -5,6 +5,9 @@
 
 import java.util.HashMap;
 
+// TODO: test if working as expected
+// TODO: genel olarak assumptionlara uyuyor mu kontrol et
+
 public class ContiguousAllocation implements AllocationMethod {
 
   // stores file ids, start blocks, and lengths
@@ -146,7 +149,7 @@ public class ContiguousAllocation implements AllocationMethod {
         while (storage[j] == 0) {
           storage[j] = storage[i]; // copy to one previous index
           storage[i] = 0; // deallocate original index
-          j--; 
+          j--;
         }
       }
     }
