@@ -7,9 +7,13 @@ import java.util.HashMap;
 
 public class ContiguousAllocation implements AllocationMethod {
 
+  // stores file ids, start blocks, and lengths
   HashMap<Integer, DirEnt> directoryTable;
+
+  // fixed length array representing the secondary storage device
   int[] storage;
 
+  // size of a block in bytes
   private int blockSize;
 
   public ContiguousAllocation(int blockSize) {
@@ -18,27 +22,39 @@ public class ContiguousAllocation implements AllocationMethod {
     this.blockSize = blockSize;
   }
 
+  // tries to create new file with given id and length in bytes
+  // raises exception if not enough space
   @Override
   public void createFile(int id, int bytes) throws Exception {
     int start;
     int blocks = (int) Math.ceil((double) bytes / (double) blockSize);
     if ((start = haveSpace(blocks)) == -1) {
       performCompaction();
-    }
-    if ((start = haveSpace(blocks)) == -1) {
-      throw new Exception("Not enough space to allocate blocks: " + blockSize);
+      if ((start = haveSpace(blocks)) == -1) {
+        throw new Exception("Not enough space to allocate blocks: " + blockSize);
+      }
     }
     allocate(id, start, blocks);
   }
 
+  // returns the block containing the given byte in the file with id
+  // raises exception if file with id doesn't exist, or offset is outside file bounds.
   @Override
-  public int access(int id, int byteOffset) {
-    return 0;
+  public int access(int id, int byteOffset) throws Exception {
+    DirEnt entry = directoryTable.get(id);
+    if (entry == null) {
+      throw new Exception("No file with given id exists: " + id);
+    } else if (byteOffset >= (blockSize * entry.length)) {
+      throw new Exception("Offset is outside file limits: " + byteOffset);
+    } else {
+      int blockOffset = (int) Math.floor((double) byteOffset / (double) blockSize);
+      return entry.start + blockOffset;
+    }
   }
 
   @Override
   public void extend(int id, int blocks) throws Exception {
-
+  
   }
 
   @Override
