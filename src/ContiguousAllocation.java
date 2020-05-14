@@ -52,6 +52,9 @@ public class ContiguousAllocation implements AllocationMethod {
     }
   }
 
+  // allocates 'blocks' more blocks for the file with given id
+  // raises exception if file with id doesn't exist, or there is not enough space after
+  //  performing compaction
   @Override
   public void extend(int id, int blocks) throws Exception {
     DirEnt entry = directoryTable.get(id);
@@ -71,6 +74,8 @@ public class ContiguousAllocation implements AllocationMethod {
     }
   }
 
+  // deallocates last 'blocks' blocks of file with given id
+  // raises exception if file with id doens't exist, or shrinking deletes the file
   @Override
   public void shrink(int id, int blocks) throws Exception {
     DirEnt entry = directoryTable.get(id);
@@ -131,20 +136,20 @@ public class ContiguousAllocation implements AllocationMethod {
     }
   }
 
-  // allocates each file in the directory table from start
-  // in the end, there is a single group of free blocks
+  // iterates over the storage array from start to end
+  // moves each element back until no more space to go
+  // this is not adaptive since each element either stays in place or moves to a smaller index
   private void performCompaction() {
-    int[] newStorage = new int[storage.length];
-    int firstFreeBlock = 0;
-    for (DirEnt entry : directoryTable.values()) {
-      int temp = entry.start;
-      entry.start = firstFreeBlock;
-      for (int i = temp; i < entry.length; i++) {
-        newStorage[firstFreeBlock] = storage[i];
-        firstFreeBlock++;
+    for (int i = 0; i < storage.length; i++) {
+      if (storage[i] > 0) {
+        int j = i - 1;
+        while (storage[j] == 0) {
+          storage[j] = storage[i]; // copy to one previous index
+          storage[i] = 0; // deallocate original index
+          j--; 
+        }
       }
     }
-    storage = newStorage;
   }
 
 }
