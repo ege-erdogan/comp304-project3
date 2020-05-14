@@ -43,7 +43,7 @@ public class ContiguousAllocation implements AllocationMethod {
   public int access(int id, int byteOffset) throws Exception {
     DirEnt entry = directoryTable.get(id);
     if (entry == null) {
-      throw new Exception("No file with given id exists: " + id);
+      throw new Exception("No file with id: " + id);
     } else if (byteOffset >= (blockSize * entry.length)) {
       throw new Exception("Offset is outside file limits: " + byteOffset);
     } else {
@@ -54,12 +54,34 @@ public class ContiguousAllocation implements AllocationMethod {
 
   @Override
   public void extend(int id, int blocks) throws Exception {
-  
+    DirEnt entry = directoryTable.get(id);
+    if (entry == null) {
+      throw new Exception("No file with id: " + id);
+    } else {
+      if (!haveExtensionSpace(entry.getEndIndex(), blocks)) {
+        performCompaction();
+        if (!haveExtensionSpace(entry.getEndIndex(), blocks)) {
+          throw new Exception("Not enough space for extension of size: " + blocks);
+        }
+      }
+      for (int i = entry.getEndIndex(); i < blocks; i++) {
+        storage[i] = i;
+      }
+      entry.length += blocks;
+    }
   }
 
   @Override
-  public void shrink(int id, int blocks) {
-
+  public void shrink(int id, int blocks) throws Exception {
+    DirEnt entry = directoryTable.get(id);
+    if (entry == null) {
+      throw new Exception("No file with id " + id);
+    } else if (blocks >= entry.length) {
+      throw new Exception("Shrink should leave at least one block in file.");
+    } else {
+      deallocate(entry.getEndIndex(), blocks);
+      entry.length -= blocks;
+    }
   }
 
   // checks if there is a contiguous space of given size
@@ -79,6 +101,17 @@ public class ContiguousAllocation implements AllocationMethod {
     return -1;
   }
 
+  // returns true if there is enough contiguous space for extension of size length
+  // after the start block
+  private boolean haveExtensionSpace(int start, int length) {
+    for (int i = start; i < length; i++) {
+      if (storage[i] != 0) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   // allocates space in storage for a given block size and adds it to the DT
   // each block contains its index value if it is used
   // this can cause unexpected behavior if it is called before checking with haveSpace
@@ -87,6 +120,14 @@ public class ContiguousAllocation implements AllocationMethod {
     directoryTable.put(id, entry);
     for (int i = start; i < length; i++) {
       storage[i] = i;
+    }
+  }
+
+  // deallocates given number of blocks by assigning 0 to them
+  // starts from the end and goes backwards
+  private void deallocate(int start, int length) {
+    for (int i = 0; i < length; i++) {
+      storage[start - i] = 0;
     }
   }
 
@@ -110,14 +151,3 @@ public class ContiguousAllocation implements AllocationMethod {
 
 
 
-
-
-
-
-
-
-
-
-
-
-\

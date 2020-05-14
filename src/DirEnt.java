@@ -15,4 +15,9 @@ public class DirEnt {
     this.length = length;
   }
 
+  // returns the index of the final block allocated to the file
+  public int getEndIndex() {
+    return start + length + 1;
+  }
+
 }
