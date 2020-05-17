@@ -5,10 +5,9 @@
 
 import java.util.HashMap;
 
-// TODO: test if working as expected
-// TODO: genel olarak assumptionlara uyuyor mu kontrol et
-
 public class ContiguousAllocation implements AllocationMethod {
+
+  private static final int BLOCK_COUNT = 16;
 
   // stores file ids, start blocks, and lengths
   HashMap<Integer, DirEnt> directoryTable;
@@ -21,7 +20,7 @@ public class ContiguousAllocation implements AllocationMethod {
 
   public ContiguousAllocation(int blockSize) {
     directoryTable = new HashMap<>();
-    storage = new int[32768];
+    storage = new int[BLOCK_COUNT];
     this.blockSize = blockSize;
   }
 
@@ -31,9 +30,9 @@ public class ContiguousAllocation implements AllocationMethod {
   public void createFile(int id, int bytes) throws Exception {
     int start;
     int blocks = (int) Math.ceil((double) bytes / (double) blockSize);
-    if ((start = haveSpace(blocks)) == -1) {
+    if ((start = haveSpace(blocks)) == -1) { // no space
       performCompaction();
-      if ((start = haveSpace(blocks)) == -1) {
+      if ((start = haveSpace(blocks)) == -1) { // still no space after compaction
         throw new Exception("Not enough space to allocate blocks: " + blockSize);
       }
     }
@@ -77,8 +76,8 @@ public class ContiguousAllocation implements AllocationMethod {
     }
   }
 
-  // deallocates last 'blocks' blocks of file with given id
-  // raises exception if file with id doens't exist, or shrinking deletes the file
+  // de-allocates last 'blocks' blocks of file with given id
+  // raises exception if file with id doesn't exist, or shrinking deletes the file
   @Override
   public void shrink(int id, int blocks) throws Exception {
     DirEnt entry = directoryTable.get(id);
@@ -96,7 +95,7 @@ public class ContiguousAllocation implements AllocationMethod {
   // returns the starting index if space exists, -1 otherwise
   private int haveSpace(int blocks) {
     int freeSpace = 0;
-    for (int i = 0; i < storage.length; i++) {
+    for (int i = 0; i < BLOCK_COUNT; i++) {
       if (storage[i] == 0) {
         freeSpace++;
         if (freeSpace == blocks) {
@@ -121,13 +120,14 @@ public class ContiguousAllocation implements AllocationMethod {
   }
 
   // allocates space in storage for a given block size and adds it to the DT
-  // each block contains its index value if it is used
+  // each block contains (its index value + 1) if it is used
   // this can cause unexpected behavior if it is called before checking with haveSpace
   private void allocate(int id, int start, int length) {
     DirEnt entry = new DirEnt(start, length);
     directoryTable.put(id, entry);
-    for (int i = start; i < length; i++) {
-      storage[i] = i;
+    for (int i = 0; i < length; i++) {
+      int index = start + i;
+      storage[index] = index + 1;
     }
   }
 
@@ -143,7 +143,7 @@ public class ContiguousAllocation implements AllocationMethod {
   // moves each element back until no more space to go
   // this is not adaptive since each element either stays in place or moves to a smaller index
   private void performCompaction() {
-    for (int i = 0; i < storage.length; i++) {
+    for (int i = 1; i < BLOCK_COUNT; i++) {
       if (storage[i] > 0) {
         int j = i - 1;
         while (storage[j] == 0) {
@@ -153,6 +153,14 @@ public class ContiguousAllocation implements AllocationMethod {
         }
       }
     }
+  }
+
+  // for debugging purposes
+  public void displayStorage() {
+    for (int i = 0; i < BLOCK_COUNT; i++) {
+      System.out.print(String.format("%d\t", storage[i]));
+    }
+    System.out.println();
   }
 
 }
