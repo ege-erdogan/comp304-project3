@@ -62,9 +62,27 @@ public class LinkedAllocation implements AllocationMethod {
     }
   }
 
+  // TODO: refactor to `allocate` method
   @Override
   public void extend(int id, int blocks) throws Exception {
-
+    Integer start = fat.get(id);
+    if (start != null) {
+      if (haveSpace(blocks)) {
+        int endIndex = getFileEndIndex(start);
+        int last = -1;
+        int freeIndex = -1;
+        for (int i = 0; i < blocks; i++) {
+          freeIndex = getNextFreeIndex();
+          storage[freeIndex] = new LinkedBlock(freeIndex, last);
+          last = freeIndex;
+        }
+        storage[endIndex].next = last;
+      } else {
+        throw new Exception("No space to allocate blocks: " + blocks);
+      }
+    } else {
+      throw new Exception("File with id doesn't exist: " + id);
+    }
   }
 
   @Override
@@ -91,6 +109,14 @@ public class LinkedAllocation implements AllocationMethod {
       }
     }
     return -1;
+  }
+
+  private int getFileEndIndex(int start) {
+    int block = start;
+    while (storage[block].next != -1) {
+      block = storage[block].next;
+    }
+    return block;
   }
 
 
