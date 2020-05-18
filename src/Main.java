@@ -17,7 +17,10 @@ public class Main {
       cont.createFile(1, 500);
       cont.displayStorage();
 
-      cont.extend(0, 3);
+      cont.shrink(0, 1);
+      cont.displayStorage();
+
+      cont.extend(0, 8);
       cont.displayStorage();
     } catch (Exception e) {
       e.printStackTrace();

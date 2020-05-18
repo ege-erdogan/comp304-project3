@@ -64,21 +64,24 @@ public class ContiguousAllocation implements AllocationMethod {
       if (haveTotalSpace(blocks)) {
         System.out.println("Before shift:");
         displayStorage();
-        while (!canExtendFile(id, blocks)) {
-          for (int i = entry.getEndIndex() + 1; i < BLOCK_COUNT; i++) {
-            shiftBack(i, entry.length);
-            displayStorage();
-            if (startOfFile(i)) {
-              getEntryByStartIndex(i).start = i - entry.length;
-            }
-            entry.start++;
-            if (canExtendFile(id, blocks)) {
-              break;
-            }
+        for (int i = entry.getEndIndex() + 1; i < BLOCK_COUNT; i++) {
+          shiftBack(i, entry.length);
+          displayStorage();
+          if (startOfFile(i)) {
+            getEntryByStartIndex(i).start = i - entry.length;
+          }
+          entry.start++;
+          if (canExtendFile(id, blocks)) {
+            break;
           }
         }
 
-        System.out.println(entry.start);
+        if (!canExtendFile(id, blocks)) {
+          System.out.println("Performing compaction");
+          performCompaction();
+          displayStorage();
+        }
+
         // extend
         for (int i = 1; i <= blocks; i++) {
           storage[entry.getEndIndex() + i] = entry.getEndIndex() + i;
@@ -143,7 +146,11 @@ public class ContiguousAllocation implements AllocationMethod {
   private boolean canExtendFile(int id, int length) {
     ContDirEnt entry = directoryTable.get(id);
     for (int i = 0; i < length; i++) {
-      if (storage[entry.getEndIndex() + i + 1] != 0) {
+      try {
+        if (storage[entry.getEndIndex() + i + 1] != 0) {
+          return false;
+        }
+      } catch (ArrayIndexOutOfBoundsException e) {
         return false;
       }
     }
@@ -174,20 +181,24 @@ public class ContiguousAllocation implements AllocationMethod {
   // moves each element back until no more space to go
   // this is not adaptive since each element either stays in place or moves to a smaller index
   private void performCompaction() {
-    for (int i = 1; i < BLOCK_COUNT; i++) {
+    for (int i = 0; i < BLOCK_COUNT; i++) {
       if (storage[i] > 0) {
         int j = i - 1;
-        while (storage[j] == 0) {
-          storage[j] = storage[i]; // copy to one previous index
-          storage[i] = 0; // deallocate original index
+        int k = i;
+        while (j >= 0 && storage[j] == 0) {
+          swap(j, k);
+          displayStorage();
           j--;
+          k--;
         }
+
         if (startOfFile(i)) {
           ContDirEnt entry = getEntryByStartIndex(i);
           entry.start = j + 1;
         }
       }
     }
+    System.out.println("Compaction ended");
   }
 
   // shifts the contents of a file back `count` times
