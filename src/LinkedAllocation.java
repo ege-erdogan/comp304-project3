@@ -87,7 +87,17 @@ public class LinkedAllocation implements AllocationMethod {
 
   @Override
   public void shrink(int id, int blocks) throws Exception {
-
+    Integer start = fat.get(id);
+    if (start != null) {
+      int endIndex = getFileEndIndex(start);
+      for (int i = 0; i < blocks; i++) {
+        storage[endIndex - i].content = 0;
+        storage[endIndex - i].next = -1;
+      }
+      storage[endIndex - blocks].next = -1; // new end block of file points to -1
+    } else {
+      throw new Exception("File with id doesn't exist: " + id);
+    }
   }
 
   // returns true if there is enough space to allocate given number of blocks, false otherwise
