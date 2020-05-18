@@ -5,6 +5,10 @@
 
 import java.util.HashMap;
 
+// TODO: check for assumptions
+// TODO: test
+// TODO: see if fat is implemented the right way
+// TODO: comment
 public class LinkedAllocation implements AllocationMethod {
 
   private static final int BLOCK_COUNT = 32768;

@@ -7,7 +7,7 @@ import java.util.HashMap;
 
 public class ContiguousAllocation implements AllocationMethod {
 
-  private static final int BLOCK_COUNT = 32768;
+  private static final int BLOCK_COUNT = 16;
 
   // stores file ids, start blocks, and lengths
   HashMap<Integer, ContDirEnt> directoryTable;
@@ -55,24 +55,17 @@ public class ContiguousAllocation implements AllocationMethod {
   }
 
   // allocates 'blocks' more blocks for the file with given id
-  // raises exception if file with id doesn't exist, or there is not enough space after
-  //  performing compaction
+  // if not enoguh space for extension, performs compaction and moves file to the end
+  //   of the directory, leaving the required number of blocks free in the end.
   @Override
   public void extend(int id, int blocks) throws Exception {
     ContDirEnt entry = directoryTable.get(id);
-    if (entry == null) {
-      throw new Exception("No file with id: " + id);
+    if (entry != null) {
+      // if there is no TOTAL space to extend (i.e. no `blocks` free blocks)
+      //   raise exception
+      //
     } else {
-      if (!haveExtensionSpace(entry.getEndIndex(), blocks)) {
-        performCompaction();
-        if (!haveExtensionSpace(entry.getEndIndex(), blocks)) {
-          throw new Exception("Not enough space for extension of size: " + blocks);
-        }
-      }
-      for (int i = entry.getEndIndex(); i < blocks; i++) {
-        storage[i] = i;
-      }
-      entry.length += blocks;
+      throw new Exception("No file with id: " + id);
     }
   }
 
@@ -151,8 +144,34 @@ public class ContiguousAllocation implements AllocationMethod {
           storage[i] = 0; // deallocate original index
           j--;
         }
+        if (startOfFile(i)) {
+          ContDirEnt entry = directoryTable.get(i);
+          entry.start = j + 1;
+        }
       }
     }
+  }
+
+  // returns true if given index is a start of a file
+  private boolean startOfFile(int index) {
+    for (ContDirEnt entry : directoryTable.values()) {
+      if (entry.start == index) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // moves a file to the end of the directory, leaving given number of blocks free in the end
+  private void moveFileToEnd(int id, int blocks) {
+    ContDirEnt entry = directoryTable.get(id);
+    int oldStart = entry.start;
+    int newStart = BLOCK_COUNT - 1 - blocks;
+    for (int i = 0; i < entry.length; i++) {
+      storage[newStart + i] = storage[oldStart + i];
+      storage[oldStart + i] = 0;
+    }
+    entry.start = newStart;
   }
 
   // for debugging purposes
