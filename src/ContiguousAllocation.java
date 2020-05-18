@@ -7,10 +7,10 @@ import java.util.HashMap;
 
 public class ContiguousAllocation implements AllocationMethod {
 
-  private static final int BLOCK_COUNT = 16;
+  private static final int BLOCK_COUNT = 32768;
 
   // stores file ids, start blocks, and lengths
-  HashMap<Integer, DirEnt> directoryTable;
+  HashMap<Integer, ContDirEnt> directoryTable;
 
   // fixed length array representing the secondary storage device
   int[] storage;
@@ -43,7 +43,7 @@ public class ContiguousAllocation implements AllocationMethod {
   // raises exception if file with id doesn't exist, or offset is outside file bounds.
   @Override
   public int access(int id, int byteOffset) throws Exception {
-    DirEnt entry = directoryTable.get(id);
+    ContDirEnt entry = directoryTable.get(id);
     if (entry == null) {
       throw new Exception("No file with id: " + id);
     } else if (byteOffset >= (blockSize * entry.length)) {
@@ -59,7 +59,7 @@ public class ContiguousAllocation implements AllocationMethod {
   //  performing compaction
   @Override
   public void extend(int id, int blocks) throws Exception {
-    DirEnt entry = directoryTable.get(id);
+    ContDirEnt entry = directoryTable.get(id);
     if (entry == null) {
       throw new Exception("No file with id: " + id);
     } else {
@@ -80,7 +80,7 @@ public class ContiguousAllocation implements AllocationMethod {
   // raises exception if file with id doesn't exist, or shrinking deletes the file
   @Override
   public void shrink(int id, int blocks) throws Exception {
-    DirEnt entry = directoryTable.get(id);
+    ContDirEnt entry = directoryTable.get(id);
     if (entry == null) {
       throw new Exception("No file with id " + id);
     } else if (blocks >= entry.length) {
@@ -123,7 +123,7 @@ public class ContiguousAllocation implements AllocationMethod {
   // each block contains (its index value + 1) if it is used
   // this can cause unexpected behavior if it is called before checking with haveSpace
   private void allocate(int id, int start, int length) {
-    DirEnt entry = new DirEnt(start, length);
+    ContDirEnt entry = new ContDirEnt(start, length);
     directoryTable.put(id, entry);
     for (int i = 0; i < length; i++) {
       int index = start + i;

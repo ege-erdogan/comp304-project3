@@ -6,11 +6,11 @@
 /**
  * A simple class to storage file ids and length in blocks in the directory table
  */
-public class DirEnt {
+public class ContDirEnt {
   int start;
   int length;
 
-  public DirEnt(int start, int length) {
+  public ContDirEnt(int start, int length) {
     this.start = start;
     this.length = length;
   }
