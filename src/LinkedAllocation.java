@@ -46,9 +46,20 @@ public class LinkedAllocation implements AllocationMethod {
     }
   }
 
+  // returns the index of the block containing the byte with the given offset
+  // raises exception if file with given id doesn't exist
   @Override
   public int access(int id, int byteOffset) throws Exception {
-    return 0;
+    Integer block = fat.get(id);
+    if (block != null) {
+      int blockOffset = (int) Math.floor((double) byteOffset / (double) blockSize);
+      for (int i = 0; i < blockOffset; i++) {
+        block = storage[block].next;
+      }
+      return block;
+    } else {
+      throw new Exception("No file with id: " + id);
+    }
   }
 
   @Override
