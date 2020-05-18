@@ -30,9 +30,9 @@ public class ContiguousAllocation implements AllocationMethod {
   public void createFile(int id, int bytes) throws Exception {
     int start;
     int blocks = (int) Math.ceil((double) bytes / (double) blockSize);
-    if ((start = haveSpace(blocks)) == -1) { // no space
+    if ((start = haveContiguousSpace(blocks)) == -1) { // no space
       performCompaction();
-      if ((start = haveSpace(blocks)) == -1) { // still no space after compaction
+      if ((start = haveContiguousSpace(blocks)) == -1) { // still no space after compaction
         throw new Exception("Not enough space to allocate blocks: " + blockSize);
       }
     }
@@ -61,9 +61,31 @@ public class ContiguousAllocation implements AllocationMethod {
   public void extend(int id, int blocks) throws Exception {
     ContDirEnt entry = directoryTable.get(id);
     if (entry != null) {
-      // if there is no TOTAL space to extend (i.e. no `blocks` free blocks)
-      //   raise exception
-      //
+      if (haveTotalSpace(blocks)) {
+        System.out.println("Before shift:");
+        displayStorage();
+        while (!canExtendFile(id, blocks)) {
+          for (int i = entry.getEndIndex() + 1; i < BLOCK_COUNT; i++) {
+            shiftBack(i, entry.length);
+            displayStorage();
+            if (startOfFile(i)) {
+              getEntryByStartIndex(i).start = i - entry.length;
+            }
+            entry.start++;
+            if (canExtendFile(id, blocks)) {
+              break;
+            }
+          }
+        }
+
+        System.out.println(entry.start);
+        // extend
+        for (int i = 1; i <= blocks; i++) {
+          storage[entry.getEndIndex() + i] = entry.getEndIndex() + i;
+        }
+      } else {
+        throw new Exception("Not enough space to allocate blocks: " + blocks);
+      }
     } else {
       throw new Exception("No file with id: " + id);
     }
@@ -86,7 +108,7 @@ public class ContiguousAllocation implements AllocationMethod {
 
   // checks if there is a contiguous space of given size
   // returns the starting index if space exists, -1 otherwise
-  private int haveSpace(int blocks) {
+  private int haveContiguousSpace(int blocks) {
     int freeSpace = 0;
     for (int i = 0; i < BLOCK_COUNT; i++) {
       if (storage[i] == 0) {
@@ -101,11 +123,27 @@ public class ContiguousAllocation implements AllocationMethod {
     return -1;
   }
 
+  // returns true if there is enough total space available to allocate given amount of blocks
+  // space doesn't have to be contiguous
+  private boolean haveTotalSpace(int blocks) {
+    int freeSpace = 0;
+    for (int i = 0; i < BLOCK_COUNT; i++) {
+      if (storage[i] == 0) {
+        freeSpace++;
+        if (freeSpace == blocks) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   // returns true if there is enough contiguous space for extension of size length
   // after the start block
-  private boolean haveExtensionSpace(int start, int length) {
-    for (int i = start; i < length; i++) {
-      if (storage[i] != 0) {
+  private boolean canExtendFile(int id, int length) {
+    ContDirEnt entry = directoryTable.get(id);
+    for (int i = 0; i < length; i++) {
+      if (storage[entry.getEndIndex() + i + 1] != 0) {
         return false;
       }
     }
@@ -145,10 +183,18 @@ public class ContiguousAllocation implements AllocationMethod {
           j--;
         }
         if (startOfFile(i)) {
-          ContDirEnt entry = directoryTable.get(i);
+          ContDirEnt entry = getEntryByStartIndex(i);
           entry.start = j + 1;
         }
       }
+    }
+  }
+
+  // shifts the contents of a file back `count` times
+  private void shiftBack(int index, int count) {
+    for (int i = 0; i < count; i++) {
+      swap(index, index - 1);
+      index--;
     }
   }
 
@@ -174,7 +220,24 @@ public class ContiguousAllocation implements AllocationMethod {
     entry.start = newStart;
   }
 
-  // for debugging purposes
+  // swaps the values in two indices
+  private void swap(int i, int j) {
+    int temp = storage[i];
+    storage[i] = storage[j];
+    storage[j] = temp;
+  }
+
+  // returns the entry corresponding to the file startign at the given index
+  private ContDirEnt getEntryByStartIndex(int index) {
+    for (ContDirEnt entry : directoryTable.values()) {
+      if (entry.start == index) {
+        return entry;
+      }
+    }
+    return null;
+  }
+
+  // for debugging
   public void displayStorage() {
     for (int i = 0; i < BLOCK_COUNT; i++) {
       System.out.print(String.format("%d\t", storage[i]));
