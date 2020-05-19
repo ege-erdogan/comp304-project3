@@ -3,16 +3,11 @@
   Linked Allocation Method Implementation
 */
 
-import java.util.Collections;
 import java.util.HashMap;
 
-// TODO: check for assumptions
-// TODO: test
-// TODO: see if fat is implemented the right way
-// TODO: comment
 public class LinkedAllocation implements AllocationMethod {
 
-  private static final int BLOCK_COUNT = 16;
+  private static final int BLOCK_COUNT = 32768;
   private int blockSize;
 
   // fixed length array for the secondary storage device

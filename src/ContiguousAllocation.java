@@ -62,11 +62,8 @@ public class ContiguousAllocation implements AllocationMethod {
     ContDirEnt entry = directoryTable.get(id);
     if (entry != null) {
       if (haveTotalSpace(blocks)) {
-        System.out.println("Before shift:");
-        displayStorage();
         for (int i = entry.getEndIndex() + 1; i < BLOCK_COUNT; i++) {
           shiftBack(i, entry.length);
-          displayStorage();
           if (startOfFile(i)) {
             getEntryByStartIndex(i).start = i - entry.length;
           }
@@ -77,9 +74,7 @@ public class ContiguousAllocation implements AllocationMethod {
         }
 
         if (!canExtendFile(id, blocks)) {
-          System.out.println("Performing compaction");
           performCompaction();
-          displayStorage();
         }
 
         // extend
@@ -187,7 +182,6 @@ public class ContiguousAllocation implements AllocationMethod {
         int k = i;
         while (j >= 0 && storage[j] == 0) {
           swap(j, k);
-          displayStorage();
           j--;
           k--;
         }
@@ -198,7 +192,6 @@ public class ContiguousAllocation implements AllocationMethod {
         }
       }
     }
-    System.out.println("Compaction ended");
   }
 
   // shifts the contents of a file back `count` times
