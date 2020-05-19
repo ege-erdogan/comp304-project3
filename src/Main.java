@@ -17,22 +17,7 @@ public class Main {
       la.displayStorage();
       la.displayFat();
 
-      la.createFile(1, 500);
-      la.displayStorage();
-      la.displayFat();
-
-      la.shrink(0, 2);
-      la.displayStorage();
-      la.displayFat();
-
-      la.createFile(2, 150);
-      la.displayStorage();
-      la.displayFat();
-
-      la.shrink(1, 2);
-      la.displayStorage();
-
-      la.extend(0, 1);
+      la.extend(0, 3);
       la.displayStorage();
 
 

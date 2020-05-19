@@ -42,16 +42,28 @@ public class LinkedAllocation implements AllocationMethod {
   public void createFile(int id, int bytes) throws Exception {
     int blocks = (int) Math.ceil((double) bytes / (double) blockSize);
     if (haveSpace(blocks)) {
-      int freeIndex = -1;
-      int last = -1;
-      for (int i = 0; i < blocks; i++) {
-        freeIndex = getNextFreeIndex();
-        storage[freeIndex] = new LinkedBlock(freeIndex, last);
-        last = freeIndex;
-      }
-      fat.put(id, freeIndex);
+      int last = allocateBlocksGetLast(blocks);
+      fat.put(id, last);
     } else {
       throw new Exception("Not enough space to allocate blocks: " + blocks);
+    }
+  }
+
+  // allocates more blocks to the file with the given id
+  // throws exception if file with id doesn't exist
+  @Override
+  public void extend(int id, int blocks) throws Exception {
+    Integer start = fat.get(id);
+    if (start != null) {
+      if (haveSpace(blocks)) {
+        int endIndex = getFileEndIndex(id);
+        int last = allocateBlocksGetLast(blocks);
+        storage[endIndex].next = last;
+      } else {
+        throw new Exception("No space to allocate blocks: " + blocks);
+      }
+    } else {
+      throw new Exception("File with id doesn't exist: " + id);
     }
   }
 
@@ -68,29 +80,6 @@ public class LinkedAllocation implements AllocationMethod {
       return block;
     } else {
       throw new Exception("No file with id: " + id);
-    }
-  }
-
-  // TODO: refactor to `allocate` method
-  @Override
-  public void extend(int id, int blocks) throws Exception {
-    Integer start = fat.get(id);
-    if (start != null) {
-      if (haveSpace(blocks)) {
-        int endIndex = getFileEndIndex(id);
-        int last = -1;
-        int freeIndex = -1;
-        for (int i = 0; i < blocks; i++) {
-          freeIndex = getNextFreeIndex();
-          storage[freeIndex] = new LinkedBlock(freeIndex, last);
-          last = freeIndex;
-        }
-        storage[endIndex].next = last;
-      } else {
-        throw new Exception("No space to allocate blocks: " + blocks);
-      }
-    } else {
-      throw new Exception("File with id doesn't exist: " + id);
     }
   }
 
@@ -139,6 +128,21 @@ public class LinkedAllocation implements AllocationMethod {
     return block;
   }
 
+  // allocates given number of blocks and returns the index of the last allocated block
+  private int allocateBlocksGetLast(int blocks) {
+    int last = -1;
+    int freeIndex = -1;
+    for (int i = 0; i < blocks; i++) {
+      freeIndex = getNextFreeIndex();
+      storage[freeIndex] = new LinkedBlock(freeIndex, last);
+      last = freeIndex;
+    }
+    return last;
+  }
+
+  // deallocates the last block of a file
+  // changes the last block's content to 0 and pointer to -1
+  // changes the new last block's pointer to -1, keeps content the same
   private void deallocateFileEnd(int id) {
     int start = fat.get(id);
     int end = getFileEndIndex(id);
@@ -151,6 +155,7 @@ public class LinkedAllocation implements AllocationMethod {
     storage[newEnd].next = -1;
   }
 
+  // for debugging
   public void displayStorage() {
     for (LinkedBlock block : storage) {
       System.out.print(String.format("[%d:%d]\t", block.content, block.next));
