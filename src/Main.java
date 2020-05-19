@@ -11,17 +11,31 @@ public class Main {
     ContiguousAllocation cont = new ContiguousAllocation(100);
 
     try {
-      cont.createFile(0, 400);
-      cont.displayStorage();
+      LinkedAllocation la = new LinkedAllocation(100);
 
-      cont.createFile(1, 500);
-      cont.displayStorage();
+      la.createFile(0, 350);
+      la.displayStorage();
+      la.displayFat();
 
-      cont.shrink(0, 1);
-      cont.displayStorage();
+      la.createFile(1, 500);
+      la.displayStorage();
+      la.displayFat();
 
-      cont.extend(0, 8);
-      cont.displayStorage();
+      la.shrink(0, 2);
+      la.displayStorage();
+      la.displayFat();
+
+      la.createFile(2, 150);
+      la.displayStorage();
+      la.displayFat();
+
+      la.shrink(1, 2);
+      la.displayStorage();
+
+      la.extend(0, 1);
+      la.displayStorage();
+
+
     } catch (Exception e) {
       e.printStackTrace();
     }

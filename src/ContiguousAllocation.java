@@ -7,7 +7,7 @@ import java.util.HashMap;
 
 public class ContiguousAllocation implements AllocationMethod {
 
-  private static final int BLOCK_COUNT = 16;
+  private static final int BLOCK_COUNT = 32768;
 
   // stores file ids, start blocks, and lengths
   HashMap<Integer, ContDirEnt> directoryTable;
@@ -217,18 +217,6 @@ public class ContiguousAllocation implements AllocationMethod {
       }
     }
     return false;
-  }
-
-  // moves a file to the end of the directory, leaving given number of blocks free in the end
-  private void moveFileToEnd(int id, int blocks) {
-    ContDirEnt entry = directoryTable.get(id);
-    int oldStart = entry.start;
-    int newStart = BLOCK_COUNT - 1 - blocks;
-    for (int i = 0; i < entry.length; i++) {
-      storage[newStart + i] = storage[oldStart + i];
-      storage[oldStart + i] = 0;
-    }
-    entry.start = newStart;
   }
 
   // swaps the values in two indices

@@ -3,6 +3,7 @@
   Linked Allocation Method Implementation
 */
 
+import java.util.Collections;
 import java.util.HashMap;
 
 // TODO: check for assumptions
@@ -11,7 +12,7 @@ import java.util.HashMap;
 // TODO: comment
 public class LinkedAllocation implements AllocationMethod {
 
-  private static final int BLOCK_COUNT = 32768;
+  private static final int BLOCK_COUNT = 16;
   private int blockSize;
 
   // fixed length array for the secondary storage device
@@ -23,10 +24,14 @@ public class LinkedAllocation implements AllocationMethod {
   public LinkedAllocation(int blockSize) {
     this.blockSize = blockSize;
     storage = new LinkedBlock[BLOCK_COUNT];
+    for (int i = 0; i < BLOCK_COUNT; i++) {
+      storage[i] = new LinkedBlock(0, -1);
+    }
     int fatBlocks = (int) Math.ceil((double) (4 * BLOCK_COUNT) / (double) blockSize);
     for (int i = 0; i < fatBlocks; i++) {
       // blocks allocated to the FAT contain -1 values for content and as pointers
-      storage[i] = new LinkedBlock(-1, -1);
+      storage[i].content = -1;
+      storage[i].next = -1;
     }
     fat = new HashMap<>();
   }
@@ -72,7 +77,7 @@ public class LinkedAllocation implements AllocationMethod {
     Integer start = fat.get(id);
     if (start != null) {
       if (haveSpace(blocks)) {
-        int endIndex = getFileEndIndex(start);
+        int endIndex = getFileEndIndex(id);
         int last = -1;
         int freeIndex = -1;
         for (int i = 0; i < blocks; i++) {
@@ -89,16 +94,15 @@ public class LinkedAllocation implements AllocationMethod {
     }
   }
 
+  // deallocates a given number of blocks from the file's end
+  // deallocate: change content to 0, pointer to -1
   @Override
   public void shrink(int id, int blocks) throws Exception {
     Integer start = fat.get(id);
     if (start != null) {
-      int endIndex = getFileEndIndex(start);
       for (int i = 0; i < blocks; i++) {
-        storage[endIndex - i].content = 0;
-        storage[endIndex - i].next = -1;
+        deallocateFileEnd(id);
       }
-      storage[endIndex - blocks].next = -1; // new end block of file points to -1
     } else {
       throw new Exception("File with id doesn't exist: " + id);
     }
@@ -125,13 +129,37 @@ public class LinkedAllocation implements AllocationMethod {
     return -1;
   }
 
-  private int getFileEndIndex(int start) {
-    int block = start;
+  // returns the end index of a file by following its linked blocks until
+  //    a block that points to -1
+  private int getFileEndIndex(int id) {
+    int block = fat.get(id);
     while (storage[block].next != -1) {
       block = storage[block].next;
     }
     return block;
   }
 
+  private void deallocateFileEnd(int id) {
+    int start = fat.get(id);
+    int end = getFileEndIndex(id);
+    int newEnd = start; // index of the block that points to the end of file
+    while (storage[newEnd].next != end) {
+      newEnd = storage[newEnd].next;
+    }
+    storage[end].next = -1;
+    storage[end].content = 0;
+    storage[newEnd].next = -1;
+  }
+
+  public void displayStorage() {
+    for (LinkedBlock block : storage) {
+      System.out.print(String.format("[%d:%d]\t", block.content, block.next));
+    }
+    System.out.println();
+  }
+
+  public void displayFat() {
+    System.out.println(fat.toString());
+  }
 
 }
