@@ -15,7 +15,7 @@ public class Experiment {
   private HashMap<String, Integer> opCounts;
 
   // keeps track of how much time has been elapsed for an operation in total
-  private HashMap<String, Integer> opTimes;
+  private HashMap<String, Long> opTimes;
 
   // keep track of the time elapsed for the ongoing operation
   // this assumes that there are no concurrent operations
@@ -28,7 +28,7 @@ public class Experiment {
     opTimes = new HashMap<>();
     for (String op : ops) {
       opCounts.put(op, 0);
-      opTimes.put(op, 0);
+      opTimes.put(op, 0l);
     }
   }
 
@@ -49,26 +49,28 @@ public class Experiment {
 
   public void endOperation(String opName) {
     time = System.currentTimeMillis() - time;
+    opTimes.put(opName, time);
     time = 0;
   }
 
   public void displayInfo() {
-    System.out.println("Total operation counts: ");
-    System.out.println("\tCreate: " + opCounts.get("CREATE"));
-    System.out.println("\tExtend: " + opCounts.get("EXTEND"));
-    System.out.println("\tAccess: " + opCounts.get("ACCESS"));
-    System.out.println("\tShrink: " + opCounts.get("SHRINK"));
-    System.out.println("Average operation times (ms): ");
-    System.out.println("\tCreate: " + getOperationAverageTime("CREATE"));
-    System.out.println("\tExtend: " + getOperationAverageTime("EXTEND"));
-    System.out.println("\tAccess: " + getOperationAverageTime("ACCESS"));
-    System.out.println("\tShrink: " + getOperationAverageTime("SHRINK"));
-    System.out.println("Creations rejected:\t" + createsRejected);
-    System.out.println("Extensions rejected:\t" + extendsRejected);
+    System.out.println("\tTotal operation counts: ");
+    System.out.println("\t\tCreate: " + opCounts.get("CREATE"));
+    System.out.println("\t\tExtend: " + opCounts.get("EXTEND"));
+    System.out.println("\t\tAccess: " + opCounts.get("ACCESS"));
+    System.out.println("\t\tShrink: " + opCounts.get("SHRINK"));
+    System.out.println("\tAverage operation times (ms): ");
+    System.out.println("\t\tCreate: " + getAverageOperationTime("CREATE"));
+    System.out.println("\t\tExtend: " + getAverageOperationTime("EXTEND"));
+    System.out.println("\t\tAccess: " + getAverageOperationTime("ACCESS"));
+    System.out.println("\t\tShrink: " + getAverageOperationTime("SHRINK"));
+    System.out.println("\tCreations rejected:\t" + createsRejected);
+    System.out.println("\tExtensions rejected:\t" + extendsRejected);
+    System.out.println();
   }
 
-  private int getOperationAverageTime(String operation) {
-    return opTimes.get(operation) / opCounts.get(operation);
+  private double getAverageOperationTime(String operation) {
+    return (double) opTimes.get(operation) / (double) opCounts.get(operation);
   }
 
 
