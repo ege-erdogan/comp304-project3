@@ -42,7 +42,7 @@ public class Main {
                   allocation.createFile(nextFileId, bytes);
                   nextFileId++;
                 } catch (Exception e) {
-//                  e.printStackTrace();
+
                 }
               case "a":
                 try {
@@ -50,7 +50,7 @@ public class Main {
                   int offset = Integer.parseInt(tokens[2]);
                   allocation.access(id, offset);
                 } catch (Exception e) {
-//                  e.printStackTrace();
+
                 }
               case "e":
                 try {
@@ -58,7 +58,7 @@ public class Main {
                   int blocks = Integer.parseInt(tokens[2]);
                   allocation.extend(id, blocks);
                 } catch (Exception e) {
-//                  e.printStackTrace();
+
                 }
               case "sh":
                 try {
@@ -66,7 +66,7 @@ public class Main {
                   int blocks = Integer.parseInt(tokens[2]);
                   allocation.shrink(id, blocks);
                 } catch (Exception e) {
-//                  e.printStackTrace();
+
                 }
             }
           }
