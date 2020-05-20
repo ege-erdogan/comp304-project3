@@ -43,18 +43,18 @@ public class Experiment {
   }
 
   public void startOperation(String opName) {
-    opCounts.put(opName, opCounts.get(opName) + 1);
     time = System.currentTimeMillis();
   }
 
   public void endOperation(String opName) {
     time = System.currentTimeMillis() - time;
-    opTimes.put(opName, time);
+    opCounts.put(opName, opCounts.get(opName) + 1);
+    opTimes.put(opName, opTimes.get(opName) + time);
     time = 0;
   }
 
   public void displayInfo() {
-    System.out.println("\tTotal operation counts: ");
+    System.out.println("\tTotal completed operation counts: ");
     System.out.println("\t\tCreate: " + opCounts.get("CREATE"));
     System.out.println("\t\tExtend: " + opCounts.get("EXTEND"));
     System.out.println("\t\tAccess: " + opCounts.get("ACCESS"));
@@ -65,7 +65,7 @@ public class Experiment {
     System.out.println("\t\tAccess: " + getAverageOperationTime("ACCESS"));
     System.out.println("\t\tShrink: " + getAverageOperationTime("SHRINK"));
     System.out.println("\tCreations rejected:\t" + createsRejected);
-    System.out.println("\tExtensions rejected:\t" + extendsRejected);
+    System.out.println("\tExtensions rejected: " + extendsRejected);
     System.out.println();
   }
 

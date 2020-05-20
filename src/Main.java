@@ -14,7 +14,9 @@ public class Main {
 
 
     for (String method = "CONTIGUOUS"; method.equals("CONTIGUOUS") || method.equals("LINKED"); ) {
-      System.out.println("Starting " + method + " allocation experiments.");
+      System.out.println("---------- Starting " + method + " allocation experiments. ----------");
+      System.out.println();
+
       for (File file : folder.listFiles()) {
         Experiment exp = new Experiment();
 
@@ -29,6 +31,7 @@ public class Main {
         }
 
         for (int i = 0; i < 5; i++) {
+          nextFileId = 0;
           Scanner scanner = null;
           try {
             scanner = new Scanner(file);
@@ -46,7 +49,6 @@ public class Main {
                     exp.endOperation("CREATE");
                     nextFileId++;
                   } catch (Exception e) {
-                    e.printStackTrace();
                     exp.createRejected();
                   }
                 case "a":
@@ -86,7 +88,7 @@ public class Main {
           }
         }
 
-        System.out.println("Experiment results with block size (after 5 iterations): " + blockSize);
+        System.out.println("Experiment results from file (after 5 iterations): " + file.getName());
         exp.displayInfo();
       }
 
