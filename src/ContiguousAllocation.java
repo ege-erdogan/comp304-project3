@@ -3,6 +3,7 @@
   Contiguous AllocationMethod Implementation
 */
 
+import java.io.FileNotFoundException;
 import java.util.HashMap;
 
 public class ContiguousAllocation implements AllocationMethod {
@@ -27,13 +28,13 @@ public class ContiguousAllocation implements AllocationMethod {
   // tries to create new file with given id and length in bytes
   // raises exception if not enough space
   @Override
-  public void createFile(int id, int bytes) throws Exception {
+  public void createFile(int id, int bytes) throws NotEnoughSpaceException {
     int start;
     int blocks = (int) Math.ceil((double) bytes / (double) blockSize);
     if ((start = haveContiguousSpace(blocks)) == -1) { // no space
       performCompaction();
       if ((start = haveContiguousSpace(blocks)) == -1) { // still no space after compaction
-        throw new Exception("Not enough space to allocate blocks: " + blockSize);
+        throw new NotEnoughSpaceException("Not enough space to allocate blocks: " + blockSize);
       }
     }
     allocate(id, start, blocks);
@@ -42,12 +43,10 @@ public class ContiguousAllocation implements AllocationMethod {
   // returns the block containing the given byte in the file with id
   // raises exception if file with id doesn't exist, or offset is outside file bounds.
   @Override
-  public int access(int id, int byteOffset) throws Exception {
+  public int access(int id, int byteOffset) throws FileNotFoundException {
     ContDirEnt entry = directoryTable.get(id);
     if (entry == null) {
-      throw new Exception("No file with id: " + id);
-    } else if (byteOffset >= (blockSize * entry.length)) {
-      throw new Exception("Offset is outside file limits: " + byteOffset);
+      throw new FileNotFoundException("No file with id: " + id);
     } else {
       int blockOffset = (int) Math.floor((double) byteOffset / (double) blockSize);
       return entry.start + blockOffset;
@@ -58,7 +57,7 @@ public class ContiguousAllocation implements AllocationMethod {
   // if not enoguh space for extension, performs compaction and moves file to the end
   //   of the directory, leaving the required number of blocks free in the end.
   @Override
-  public void extend(int id, int blocks) throws Exception {
+  public void extend(int id, int blocks) throws NotEnoughSpaceException, FileNotFoundException {
     ContDirEnt entry = directoryTable.get(id);
     if (entry != null) {
       if (haveTotalSpace(blocks)) {
@@ -82,10 +81,10 @@ public class ContiguousAllocation implements AllocationMethod {
           storage[entry.getEndIndex() + i] = entry.getEndIndex() + i;
         }
       } else {
-        throw new Exception("Not enough space to allocate blocks: " + blocks);
+        throw new NotEnoughSpaceException("Not enough space to allocate blocks: " + blocks);
       }
     } else {
-      throw new Exception("No file with id: " + id);
+      throw new FileNotFoundException("No file with id: " + id);
     }
   }
 
@@ -95,7 +94,7 @@ public class ContiguousAllocation implements AllocationMethod {
   public void shrink(int id, int blocks) throws Exception {
     ContDirEnt entry = directoryTable.get(id);
     if (entry == null) {
-      throw new Exception("No file with id " + id);
+      throw new FileNotFoundException("No file with id " + id);
     } else if (blocks >= entry.length) {
       throw new Exception("Shrink should leave at least one block in file.");
     } else {

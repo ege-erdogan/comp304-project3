@@ -3,6 +3,7 @@
   Linked Allocation Method Implementation
 */
 
+import java.io.FileNotFoundException;
 import java.util.HashMap;
 
 public class LinkedAllocation implements AllocationMethod {
@@ -34,20 +35,20 @@ public class LinkedAllocation implements AllocationMethod {
   // allocates space for a file starting from the end
   // the last block allocated is the file's start block
   @Override
-  public void createFile(int id, int bytes) throws Exception {
+  public void createFile(int id, int bytes) throws NotEnoughSpaceException {
     int blocks = (int) Math.ceil((double) bytes / (double) blockSize);
     if (haveSpace(blocks)) {
       int last = allocateBlocksGetLast(blocks);
       fat.put(id, last);
     } else {
-      throw new Exception("Not enough space to allocate blocks: " + blocks);
+      throw new NotEnoughSpaceException("Not enough space to allocate blocks: " + blocks);
     }
   }
 
   // allocates more blocks to the file with the given id
   // throws exception if file with id doesn't exist
   @Override
-  public void extend(int id, int blocks) throws Exception {
+  public void extend(int id, int blocks) throws NotEnoughSpaceException, FileNotFoundException {
     Integer start = fat.get(id);
     if (start != null) {
       if (haveSpace(blocks)) {
@@ -55,17 +56,17 @@ public class LinkedAllocation implements AllocationMethod {
         int last = allocateBlocksGetLast(blocks);
         storage[endIndex].next = last;
       } else {
-        throw new Exception("No space to allocate blocks: " + blocks);
+        throw new NotEnoughSpaceException("No space to allocate blocks: " + blocks);
       }
     } else {
-      throw new Exception("File with id doesn't exist: " + id);
+      throw new FileNotFoundException("File with id doesn't exist: " + id);
     }
   }
 
   // returns the index of the block containing the byte with the given offset
   // raises exception if file with given id doesn't exist
   @Override
-  public int access(int id, int byteOffset) throws Exception {
+  public int access(int id, int byteOffset) throws FileNotFoundException {
     Integer block = fat.get(id);
     if (block != null) {
       int blockOffset = (int) Math.floor((double) byteOffset / (double) blockSize);
@@ -74,7 +75,7 @@ public class LinkedAllocation implements AllocationMethod {
       }
       return block;
     } else {
-      throw new Exception("No file with id: " + id);
+      throw new FileNotFoundException("No file with id: " + id);
     }
   }
 
@@ -88,7 +89,7 @@ public class LinkedAllocation implements AllocationMethod {
         deallocateFileEnd(id);
       }
     } else {
-      throw new Exception("File with id doesn't exist: " + id);
+      throw new FileNotFoundException("File with id doesn't exist: " + id);
     }
   }
 
