@@ -61,24 +61,28 @@ public class ContiguousAllocation implements AllocationMethod {
     ContDirEnt entry = directoryTable.get(id);
     if (entry != null) {
       if (haveTotalSpace(blocks)) {
-        for (int i = entry.getEndIndex() + 1; i < BLOCK_COUNT; i++) {
-          shiftBack(i, entry.length);
-          if (startOfFile(i)) {
-            getEntryByStartIndex(i).start = i - entry.length;
+        if (canExtendFile(id, blocks)) {
+          performExtension(entry, blocks);
+        } else {
+          for (int i = entry.getEndIndex() + 1; i < BLOCK_COUNT; i++) {
+            shiftBack(i, entry.length);
+            if (isStartOfFile(i)) {
+              getEntryByStartIndex(i).start = i - entry.length;
+            }
+            entry.start++;
+            if (canExtendFile(id, blocks)) {
+              performExtension(entry, blocks);
+              return;
+            }
           }
-          entry.start++;
-          if (canExtendFile(id, blocks)) {
-            break;
-          }
-        }
 
-        if (!canExtendFile(id, blocks)) {
+          // still can't extend file. see if compaction works.
           performCompaction();
-        }
-
-        // extend
-        for (int i = 1; i <= blocks; i++) {
-          storage[entry.getEndIndex() + i] = entry.getEndIndex() + i;
+          if (canExtendFile(id, blocks)) {
+            performExtension(entry, blocks);
+          } else {
+            throw new NotEnoughSpaceException("Not enough space to allocate blocks: " + blocks);
+          }
         }
       } else {
         throw new NotEnoughSpaceException("Not enough space to allocate blocks: " + blocks);
@@ -91,15 +95,17 @@ public class ContiguousAllocation implements AllocationMethod {
   // de-allocates last 'blocks' blocks of file with given id
   // raises exception if file with id doesn't exist, or shrinking deletes the file
   @Override
-  public void shrink(int id, int blocks) throws Exception {
+  public void shrink(int id, int blocks) throws FileNotFoundException, CannotShrinkMoreException {
     ContDirEnt entry = directoryTable.get(id);
-    if (entry == null) {
-      throw new FileNotFoundException("No file with id " + id);
-    } else if (blocks >= entry.length) {
-      throw new Exception("Shrink should leave at least one block in file.");
+    if (entry != null) {
+      if (blocks < entry.length) {
+        deallocate(entry.getEndIndex(), blocks);
+        entry.length -= blocks;
+      } else {
+        throw new CannotShrinkMoreException("Cannot shrink file more than its length.");
+      }
     } else {
-      deallocate(entry.getEndIndex(), blocks);
-      entry.length -= blocks;
+      throw new FileNotFoundException("No file with id: " + id);
     }
   }
 
@@ -167,6 +173,9 @@ public class ContiguousAllocation implements AllocationMethod {
   // starts from the end and goes backwards
   private void deallocate(int start, int length) {
     for (int i = 0; i < length; i++) {
+      if (start < i) {
+        return;
+      }
       storage[start - i] = 0;
     }
   }
@@ -185,7 +194,7 @@ public class ContiguousAllocation implements AllocationMethod {
           k--;
         }
 
-        if (startOfFile(i)) {
+        if (isStartOfFile(i)) {
           ContDirEnt entry = getEntryByStartIndex(i);
           entry.start = j + 1;
         }
@@ -202,13 +211,8 @@ public class ContiguousAllocation implements AllocationMethod {
   }
 
   // returns true if given index is a start of a file
-  private boolean startOfFile(int index) {
-    for (ContDirEnt entry : directoryTable.values()) {
-      if (entry.start == index) {
-        return true;
-      }
-    }
-    return false;
+  private boolean isStartOfFile(int index) {
+    return directoryTable.values().contains(index);
   }
 
   // swaps the values in two indices
@@ -228,12 +232,28 @@ public class ContiguousAllocation implements AllocationMethod {
     return null;
   }
 
+  private void performExtension(ContDirEnt entry, int blocks) {
+    for (int i = 1; i <= blocks; i++) {
+      storage[entry.getEndIndex() + i] = entry.getEndIndex() + i;
+    }
+    entry.length += blocks;
+  }
+
   // for debugging
   public void displayStorage() {
     for (int i = 0; i < BLOCK_COUNT; i++) {
       System.out.print(String.format("%d\t", storage[i]));
     }
     System.out.println();
+  }
+
+  private int getFreeSpace() {
+    int count = 0;
+    for (int el : storage) {
+      if (el == 0)
+        count++;
+    }
+    return count;
   }
 
 }

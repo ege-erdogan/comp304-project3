@@ -9,5 +9,5 @@ public interface AllocationMethod {
   void createFile(int id, int bytes) throws NotEnoughSpaceException;
   int access(int id, int byteOffset) throws FileNotFoundException;
   void extend(int id, int blocks) throws NotEnoughSpaceException, FileNotFoundException;
-  void shrink(int id, int blocks) throws Exception;
+  void shrink(int id, int blocks) throws FileNotFoundException, CannotShrinkMoreException;
 }

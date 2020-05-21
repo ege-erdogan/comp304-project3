@@ -82,7 +82,7 @@ public class LinkedAllocation implements AllocationMethod {
   // deallocates a given number of blocks from the file's end
   // deallocate: change content to 0, pointer to -1
   @Override
-  public void shrink(int id, int blocks) throws Exception {
+  public void shrink(int id, int blocks) throws FileNotFoundException {
     Integer start = fat.get(id);
     if (start != null) {
       for (int i = 0; i < blocks; i++) {

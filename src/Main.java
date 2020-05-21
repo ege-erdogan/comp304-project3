@@ -5,6 +5,7 @@
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class Main {
@@ -35,6 +36,7 @@ public class Main {
         allocation = new LinkedAllocation(blockSize);
       }
 
+      System.out.println("Starting executing file: " + file.getName());
       for (int i = 0; i < 5; i++) {
         nextFileId = 0;
         Scanner scanner = null;
@@ -45,48 +47,48 @@ public class Main {
             String line = scanner.nextLine();
             String[] tokens = line.split(":");
 
-            switch (tokens[0]) {
-              case "c":
-                try {
-                  int bytes = Integer.parseInt(tokens[1]);
-                  exp.startOperation("CREATE");
-                  allocation.createFile(nextFileId, bytes);
-                  exp.endOperation("CREATE");
-                  nextFileId++;
-                } catch (NotEnoughSpaceException e) {
-                  exp.createRejected();
-                  nextFileId++;
-                }
-              case "a":
-                try {
-                  int id = Integer.parseInt(tokens[1]);
-                  int offset = Integer.parseInt(tokens[2]);
-                  exp.startOperation("ACCESS");
-                  allocation.access(id, offset);
-                  exp.endOperation("ACCESS");
-                } catch (Exception e) {
-
-                }
-              case "e":
-                try {
-                  int id = Integer.parseInt(tokens[1]);
-                  int blocks = Integer.parseInt(tokens[2]);
-                  exp.startOperation("EXTEND");
-                  allocation.extend(id, blocks);
-                  exp.endOperation("EXTEND");
-                } catch (NotEnoughSpaceException e) {
-                  exp.extendRejected();
-                }
-              case "sh":
-                try {
-                  int id = Integer.parseInt(tokens[1]);
-                  int blocks = Integer.parseInt(tokens[2]);
-                  exp.startOperation("SHRINK");
-                  allocation.shrink(id, blocks);
-                  exp.endOperation("SHRINK");
-                } catch (Exception e) {
-
-                }
+            String opCode = tokens[0];
+            if (opCode.equals("c")) {
+              try {
+                int bytes = Integer.parseInt(tokens[1]);
+                exp.startOperation("CREATE");
+                allocation.createFile(nextFileId, bytes);
+                exp.endOperation("CREATE");
+                nextFileId++;
+              } catch (NotEnoughSpaceException e) {
+                exp.createRejected();
+                nextFileId++;
+              }
+            } else if (opCode.equals("a")) {
+              try {
+                int id = Integer.parseInt(tokens[1]);
+                int offset = Integer.parseInt(tokens[2]);
+                exp.startOperation("ACCESS");
+                allocation.access(id, offset);
+                exp.endOperation("ACCESS");
+              } catch (Exception e) {
+                continue;
+              }
+            } else if (opCode.equals("e")) {
+              try {
+                int id = Integer.parseInt(tokens[1]);
+                int blocks = Integer.parseInt(tokens[2]);
+                exp.startOperation("EXTEND");
+                allocation.extend(id, blocks);
+                exp.endOperation("EXTEND");
+              } catch (NotEnoughSpaceException e) {
+                exp.extendRejected();
+              }
+            } else if (opCode.equals("sh")) {
+              try {
+                int id = Integer.parseInt(tokens[1]);
+                int blocks = Integer.parseInt(tokens[2]);
+                exp.startOperation("SHRINK");
+                allocation.shrink(id, blocks);
+                exp.endOperation("SHRINK");
+              } catch (FileNotFoundException | CannotShrinkMoreException e) {
+                continue;
+              }
             }
           }
         } catch (FileNotFoundException e) {

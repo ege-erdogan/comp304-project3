@@ -4,7 +4,7 @@
 */
 
 /**
- * A simple class to storage file ids and length in blocks in the directory table
+ * A simple class to store file ids and length in blocks in the directory table
  */
 public class ContDirEnt {
   int start;
@@ -18,6 +18,14 @@ public class ContDirEnt {
   // returns the index of the final block allocated to the file
   public int getEndIndex() {
     return start + length - 1;
+  }
+
+  @Override
+  public String toString() {
+    return "ContDirEnt{" +
+            "start=" + start +
+            ", length=" + length +
+            '}';
   }
 
 }
