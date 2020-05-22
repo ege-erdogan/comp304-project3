@@ -51,7 +51,7 @@ public class LinkedAllocation implements AllocationMethod {
         last = nextIndex;
       }
     } else {
-      throw new NotEnoughSpaceException("Not enough space to allocte blocks: " + blocks);
+      throw new NotEnoughSpaceException("Not enough space to allocate blocks: " + blocks);
     }
   }
 
@@ -99,16 +99,20 @@ public class LinkedAllocation implements AllocationMethod {
   //             2. remove fat entry pointing to the end index
   @Override
   public void shrink(int id, int blocks) throws FileNotFoundException {
-    Integer start = fat.get(id);
+    Integer start = directoryEntries.get(id);
     if (start != null) {
-      int end = getFileEndIndex(id);
+      int length = getFileLength(id);
+      int newLength = length - blocks;
+      int newEnd = start;
+      for (int i = 1; i < newLength; i++) {
+        newEnd = fat.get(newEnd);
+      }
+      int next = newEnd;
       for (int i = 0; i < blocks; i++) {
-        storage[end] = 0;
-        for (int key : fat.keySet()) {
-          if (fat.get(key) == end) {
-            fat.remove(key);
-          }
-        }
+        int temp = next;
+        next = fat.get(next);
+        fat.remove(temp);
+        storage[next] = 0;
       }
     } else {
       throw new FileNotFoundException("File with id doesn't exist: " + id);
@@ -119,7 +123,7 @@ public class LinkedAllocation implements AllocationMethod {
   private boolean haveSpace(int blocks) {
     int freeSpace = 0;
     for (int elt : storage) {
-      if (elt > 0) {
+      if (elt == 0) {
         freeSpace++;
       }
     }
@@ -150,36 +154,15 @@ public class LinkedAllocation implements AllocationMethod {
     }
   }
 
-  // allocates given number of blocks and returns the index of the last allocated block
-  private int allocateBlocksGetLast(int blocks) {
-    int last = -1;
-    int freeIndex = -1;
-    for (int i = 0; i < blocks; i++) {
-      freeIndex = getNextFreeIndex();
-      storage[freeIndex] = new LinkedBlock(freeIndex, last);
-      last = freeIndex;
+  // returns the number of blocks occupied by the file with the given id
+  private int getFileLength(int id) {
+    int length = 1;
+    Integer block = directoryEntries.get(id);
+    while (block != null) {
+      block = fat.get(block);
+      length++;
     }
-    return last;
-  }
-
-  // deallocates the last block of a file
-  // changes the last block's content to 0 and pointer to -1
-  // changes the new last block's pointer to -1, keeps content the same
-  private void deallocateFileEnd(int id) {
-    int end = getFileEndIndex(id);
-    storage[end] = 0;
-  }
-
-  // for debugging
-  public void displayStorage() {
-    for (LinkedBlock block : storage) {
-      System.out.print(String.format("[%d:%d]\t", block.content, block.next));
-    }
-    System.out.println();
-  }
-
-  public void displayFat() {
-    System.out.println(fat.toString());
+    return length;
   }
 
 }
