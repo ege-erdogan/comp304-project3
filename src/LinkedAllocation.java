@@ -94,14 +94,21 @@ public class LinkedAllocation implements AllocationMethod {
     }
   }
 
-  // deallocates a given number of blocks from the file's end
-  // deallocate: change content to 0, pointer to -1
+  // deallocates a file's end block given number of times
+  // deallocate: 1. change storage value to 0
+  //             2. remove fat entry pointing to the end index
   @Override
   public void shrink(int id, int blocks) throws FileNotFoundException {
     Integer start = fat.get(id);
     if (start != null) {
+      int end = getFileEndIndex(id);
       for (int i = 0; i < blocks; i++) {
-        deallocateFileEnd(id);
+        storage[end] = 0;
+        for (int key : fat.keySet()) {
+          if (fat.get(key) == end) {
+            fat.remove(key);
+          }
+        }
       }
     } else {
       throw new FileNotFoundException("File with id doesn't exist: " + id);
@@ -159,15 +166,8 @@ public class LinkedAllocation implements AllocationMethod {
   // changes the last block's content to 0 and pointer to -1
   // changes the new last block's pointer to -1, keeps content the same
   private void deallocateFileEnd(int id) {
-    int start = fat.get(id);
     int end = getFileEndIndex(id);
-    int newEnd = start; // index of the block that points to the end of file
-    while (storage[newEnd].next != end) {
-      newEnd = storage[newEnd].next;
-    }
-    storage[end].next = -1;
-    storage[end].content = 0;
-    storage[newEnd].next = -1;
+    storage[end] = 0;
   }
 
   // for debugging
