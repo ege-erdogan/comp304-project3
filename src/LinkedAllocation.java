@@ -12,24 +12,25 @@ public class LinkedAllocation implements AllocationMethod {
   private int blockSize;
 
   // fixed length array for the secondary storage device
-  LinkedBlock[] storage;
+  int[] storage;
+
+  // contains the directory entries pointing to the start block of each file in the fat
+  // <file id, start block>
+  HashMap<Integer, Integer> directoryEntries;
 
   // fat keeps file ids and their start index
   HashMap<Integer, Integer> fat;
 
   public LinkedAllocation(int blockSize) {
     this.blockSize = blockSize;
-    storage = new LinkedBlock[BLOCK_COUNT];
-    for (int i = 0; i < BLOCK_COUNT; i++) {
-      storage[i] = new LinkedBlock(0, -1);
-    }
-    int fatBlocks = (int) Math.ceil((double) (4 * BLOCK_COUNT) / (double) blockSize);
-    for (int i = 0; i < fatBlocks; i++) {
-      // blocks allocated to the FAT contain -1 values for content and as pointers
-      storage[i].content = -1;
-      storage[i].next = -1;
-    }
+    directoryEntries = new HashMap<>();
     fat = new HashMap<>();
+    int fatBlocks = (int) Math.ceil((double) (4 * BLOCK_COUNT) / (double) blockSize);
+    storage = new int[BLOCK_COUNT];
+    for (int i = 0; i < fatBlocks; i++) {
+      // blocks allocated to the FAT contain -1 for values
+      storage[i] = -1;
+    }
   }
 
   // allocates space for a file starting from the end
@@ -38,10 +39,19 @@ public class LinkedAllocation implements AllocationMethod {
   public void createFile(int id, int bytes) throws NotEnoughSpaceException {
     int blocks = (int) Math.ceil((double) bytes / (double) blockSize);
     if (haveSpace(blocks)) {
-      int last = allocateBlocksGetLast(blocks);
-      fat.put(id, last);
+      // allocate space for file
+      int start = getNextFreeIndex();
+      directoryEntries.put(id, start);
+      int last = start;
+      storage[start] = start;
+      for (int i = 1; i < blocks; i++) {
+        int nextIndex = getNextFreeIndex();
+        fat.put(last, nextIndex);
+        storage[nextIndex] = nextIndex;
+        last = nextIndex;
+      }
     } else {
-      throw new NotEnoughSpaceException("Not enough space to allocate blocks: " + blocks);
+      throw new NotEnoughSpaceException("Not enough space to allocte blocks: " + blocks);
     }
   }
 
@@ -96,8 +106,8 @@ public class LinkedAllocation implements AllocationMethod {
   // returns true if there is enough space to allocate given number of blocks, false otherwise
   private boolean haveSpace(int blocks) {
     int freeSpace = 0;
-    for (LinkedBlock block : storage) {
-      if (block.content == 0) {
+    for (int elt : storage) {
+      if (elt > 0) {
         freeSpace++;
       }
     }
@@ -107,7 +117,7 @@ public class LinkedAllocation implements AllocationMethod {
   // returns the index of the first free block
   private int getNextFreeIndex() {
     for (int i = 0; i < BLOCK_COUNT; i++) {
-      if (storage[i].content == 0) {
+      if (storage[i] == 0) {
         return i;
       }
     }
