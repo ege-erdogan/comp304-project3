@@ -82,11 +82,11 @@ public class LinkedAllocation implements AllocationMethod {
   // raises exception if file with given id doesn't exist
   @Override
   public int access(int id, int byteOffset) throws FileNotFoundException {
-    Integer block = fat.get(id);
+    Integer block = directoryEntries.get(id);
     if (block != null) {
       int blockOffset = (int) Math.floor((double) byteOffset / (double) blockSize);
       for (int i = 0; i < blockOffset; i++) {
-        block = storage[block].next;
+        block = fat.get(block);
       }
       return block;
     } else {
