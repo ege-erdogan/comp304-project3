@@ -59,12 +59,17 @@ public class LinkedAllocation implements AllocationMethod {
   // throws exception if file with id doesn't exist
   @Override
   public void extend(int id, int blocks) throws NotEnoughSpaceException, FileNotFoundException {
-    Integer start = fat.get(id);
+    Integer start = directoryEntries.get(id);
     if (start != null) {
       if (haveSpace(blocks)) {
-        int endIndex = getFileEndIndex(id);
-        int last = allocateBlocksGetLast(blocks);
-        storage[endIndex].next = last;
+        // perform extension
+        int end = getFileEndIndex(id);
+        for (int i = 0; i < blocks; i++) {
+          int nextFree = getNextFreeIndex();
+          fat.put(end, nextFree);
+          storage[nextFree] = nextFree;
+          end = nextFree;
+        }
       } else {
         throw new NotEnoughSpaceException("No space to allocate blocks: " + blocks);
       }
@@ -124,14 +129,18 @@ public class LinkedAllocation implements AllocationMethod {
     return -1;
   }
 
-  // returns the end index of a file by following its linked blocks until
-  //    a block that points to -1
+  // returns the index of the block at the end of the file with given id
   private int getFileEndIndex(int id) {
-    int block = fat.get(id);
-    while (storage[block].next != -1) {
-      block = storage[block].next;
+    int block = directoryEntries.get(id);
+    Integer next = fat.get(block);
+    while (true) {
+      if (next == null) {
+        return block;
+      } else {
+        block = next;
+        next = fat.get(block);
+      }
     }
-    return block;
   }
 
   // allocates given number of blocks and returns the index of the last allocated block
