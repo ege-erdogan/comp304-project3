@@ -98,22 +98,27 @@ public class LinkedAllocation implements AllocationMethod {
   // deallocate: 1. change storage value to 0
   //             2. remove fat entry pointing to the end index
   @Override
-  public void shrink(int id, int blocks) throws FileNotFoundException {
+  public void shrink(int id, int blocks) throws FileNotFoundException, CannotShrinkMoreException {
     Integer start = directoryEntries.get(id);
     if (start != null) {
       int length = getFileLength(id);
-      int newLength = length - blocks;
-      int newEnd = start;
-      for (int i = 1; i < newLength; i++) {
-        newEnd = fat.get(newEnd);
+      if (blocks < length) {
+        int newLength = length - blocks;
+        int newEnd = start;
+        for (int i = 1; i < newLength; i++) {
+          newEnd = fat.get(newEnd);
+        }
+        int next = newEnd;
+        for (int i = 1; i < blocks; i++) {
+          int temp = next;
+          next = fat.get(next);
+          fat.remove(temp);
+          storage[next] = 0;
+        }
+      } else {
+        throw new CannotShrinkMoreException("Can't shrink more than length.");
       }
-      int next = newEnd;
-      for (int i = 0; i < blocks; i++) {
-        int temp = next;
-        next = fat.get(next);
-        fat.remove(temp);
-        storage[next] = 0;
-      }
+
     } else {
       throw new FileNotFoundException("File with id doesn't exist: " + id);
     }
