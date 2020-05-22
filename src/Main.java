@@ -5,14 +5,13 @@
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.Arrays;
 import java.util.Scanner;
 
 public class Main {
   public static void main(String[] args) {
-    System.out.println("--- Starting CONTIGUOUS allocation experiments ---");
-    System.out.println();
-    runExperiment("CONTIGUOUS");
+//    System.out.println("--- Starting CONTIGUOUS allocation experiments ---");
+//    System.out.println();
+//    runExperiment("CONTIGUOUS");
 
     System.out.println("--- Starting LINKED allocation experiments ---");
     System.out.println();
@@ -36,7 +35,7 @@ public class Main {
         allocation = new LinkedAllocation(blockSize);
       }
 
-      System.out.println("Starting executing file: " + file.getName());
+      System.out.println("Executing file: " + file.getName());
       for (int i = 0; i < 5; i++) {
         nextFileId = 0;
         Scanner scanner = null;
@@ -56,8 +55,8 @@ public class Main {
                 exp.endOperation("CREATE");
                 nextFileId++;
               } catch (NotEnoughSpaceException e) {
-                exp.createRejected();
                 nextFileId++;
+                exp.createRejected();
               }
             } else if (opCode.equals("a")) {
               try {
@@ -67,7 +66,7 @@ public class Main {
                 allocation.access(id, offset);
                 exp.endOperation("ACCESS");
               } catch (Exception e) {
-                continue;
+                // ignore
               }
             } else if (opCode.equals("e")) {
               try {
@@ -76,7 +75,7 @@ public class Main {
                 exp.startOperation("EXTEND");
                 allocation.extend(id, blocks);
                 exp.endOperation("EXTEND");
-              } catch (NotEnoughSpaceException e) {
+              } catch (FileNotFoundException | NotEnoughSpaceException e) {
                 exp.extendRejected();
               }
             } else if (opCode.equals("sh")) {
@@ -87,7 +86,7 @@ public class Main {
                 allocation.shrink(id, blocks);
                 exp.endOperation("SHRINK");
               } catch (FileNotFoundException | CannotShrinkMoreException e) {
-                continue;
+                // ignore;
               }
             }
           }
@@ -97,7 +96,7 @@ public class Main {
       }
 
       System.out.println("Experiment results from file: " + file.getName());
-      exp.displayInfo();
+      exp.displayResults();
     }
   }
 

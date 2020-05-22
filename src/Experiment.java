@@ -53,7 +53,7 @@ public class Experiment {
     time = 0;
   }
 
-  public void displayInfo() {
+  public void displayResults() {
     System.out.println("\tTotal completed operation counts: ");
     System.out.println("\t\tCreate: " + opCounts.get("CREATE"));
     System.out.println("\t\tExtend: " + opCounts.get("EXTEND"));
