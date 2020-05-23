@@ -8,7 +8,7 @@ import java.util.HashMap;
 
 public class LinkedAllocation implements AllocationMethod {
 
-  private static final int BLOCK_COUNT = 32768;
+  private static final int BLOCK_COUNT = 32;
   private int blockSize;
 
   // fixed length array for the secondary storage device
@@ -19,6 +19,7 @@ public class LinkedAllocation implements AllocationMethod {
   HashMap<Integer, Integer> directoryEntries;
 
   // fat keeps file ids and their start index
+  // <index, index of next block>
   HashMap<Integer, Integer> fat;
 
   public LinkedAllocation(int blockSize) {
@@ -49,6 +50,9 @@ public class LinkedAllocation implements AllocationMethod {
         fat.put(last, nextIndex);
         storage[nextIndex] = nextIndex;
         last = nextIndex;
+      }
+      if (getFileLength(id) != blocks) {
+        throw new RuntimeException(String.format("%d - %d", getFileLength(id), blocks));
       }
     } else {
       throw new NotEnoughSpaceException("Not enough space to allocate blocks: " + blocks);
@@ -109,7 +113,7 @@ public class LinkedAllocation implements AllocationMethod {
           newEnd = fat.get(newEnd);
         }
         int next = newEnd;
-        for (int i = 1; i < blocks; i++) {
+        for (int i = 0; i < blocks; i++) {
           int temp = next;
           next = fat.get(next);
           fat.remove(temp);
@@ -160,8 +164,8 @@ public class LinkedAllocation implements AllocationMethod {
   }
 
   // returns the number of blocks occupied by the file with the given id
-  private int getFileLength(int id) {
-    int length = 1;
+  public int getFileLength(int id) {
+    int length = 0;
     Integer block = directoryEntries.get(id);
     while (block != null) {
       block = fat.get(block);
