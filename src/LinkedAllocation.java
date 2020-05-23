@@ -8,7 +8,7 @@ import java.util.HashMap;
 
 public class LinkedAllocation implements AllocationMethod {
 
-  private static final int BLOCK_COUNT = 32;
+  private static final int BLOCK_COUNT = 32768;
   private int blockSize;
 
   // fixed length array for the secondary storage device
@@ -50,9 +50,6 @@ public class LinkedAllocation implements AllocationMethod {
         fat.put(last, nextIndex);
         storage[nextIndex] = nextIndex;
         last = nextIndex;
-      }
-      if (getFileLength(id) != blocks) {
-        throw new RuntimeException(String.format("%d - %d", getFileLength(id), blocks));
       }
     } else {
       throw new NotEnoughSpaceException("Not enough space to allocate blocks: " + blocks);

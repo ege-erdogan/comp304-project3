@@ -10,34 +10,13 @@ import java.util.Scanner;
 
 public class Main {
   public static void main(String[] args) {
-//    System.out.println("--- Starting CONTIGUOUS allocation experiments ---");
-//    System.out.println();
-//    runExperiment("CONTIGUOUS");
+    System.out.println("--- Starting CONTIGUOUS allocation experiments ---");
+    System.out.println();
+    runExperiment("CONTIGUOUS");
 
-//    System.out.println("--- Starting LINKED allocation experiments ---");
-//    System.out.println();
-//    runExperiment("LINKED");
-
-    LinkedAllocation al = new LinkedAllocation(100);
-    try {
-      al.createFile(0, 110);
-      System.out.println(Arrays.toString(al.storage));
-      System.out.println(al.fat.toString());
-      System.out.println(al.getFileLength(0));
-
-      al.shrink(0, 1);
-      System.out.println(Arrays.toString(al.storage));
-      System.out.println(al.fat.toString());
-      System.out.println(al.getFileLength(0));
-
-    } catch (NotEnoughSpaceException e) {
-      e.printStackTrace();
-    } catch (FileNotFoundException e) {
-      e.printStackTrace();
-    } catch (CannotShrinkMoreException e) {
-      e.printStackTrace();
-    }
-
+    System.out.println("--- Starting LINKED allocation experiments ---");
+    System.out.println();
+    runExperiment("LINKED");
   }
 
   // runs the experiment by executing each file's contents 5 times using the given method
