@@ -45,16 +45,16 @@ public class ContiguousAllocation implements AllocationMethod {
   @Override
   public int access(int id, int byteOffset) throws FileNotFoundException {
     ContDirEnt entry = directoryTable.get(id);
-    if (entry == null) {
-      throw new FileNotFoundException("No file with id: " + id);
-    } else {
+    if (entry != null) {
       int blockOffset = (int) Math.floor((double) byteOffset / (double) blockSize);
       return entry.start + blockOffset;
+    } else {
+      throw new FileNotFoundException("No file with id: " + id);
     }
   }
 
   // allocates 'blocks' more blocks for the file with given id
-  // if not enoguh space for extension, performs compaction and moves file to the end
+  // if not enough space for extension, performs compaction and moves file to the end
   //   of the directory, leaving the required number of blocks free in the end.
   @Override
   public void extend(int id, int blocks) throws NotEnoughSpaceException, FileNotFoundException {
@@ -237,23 +237,6 @@ public class ContiguousAllocation implements AllocationMethod {
       storage[entry.getEndIndex() + i] = entry.getEndIndex() + i;
     }
     entry.length += blocks;
-  }
-
-  // for debugging
-  public void displayStorage() {
-    for (int i = 0; i < BLOCK_COUNT; i++) {
-      System.out.print(String.format("%d\t", storage[i]));
-    }
-    System.out.println();
-  }
-
-  private int getFreeSpace() {
-    int count = 0;
-    for (int el : storage) {
-      if (el == 0)
-        count++;
-    }
-    return count;
   }
 
 }

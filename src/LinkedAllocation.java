@@ -108,9 +108,10 @@ public class LinkedAllocation implements AllocationMethod {
         int newEnd = start;
         for (int i = 1; i < newLength; i++) {
           newEnd = fat.get(newEnd);
-        }
+        } // new end block of file after shrinking is calculated
         int next = newEnd;
         for (int i = 0; i < blocks; i++) {
+          // all blocks after the new end block are deallocated
           int temp = next;
           next = fat.get(next);
           fat.remove(temp);
