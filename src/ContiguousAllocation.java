@@ -99,7 +99,7 @@ public class ContiguousAllocation implements AllocationMethod {
     ContDirEnt entry = directoryTable.get(id);
     if (entry != null) {
       if (blocks < entry.length) {
-        deallocate(entry.getEndIndex(), blocks);
+        deallocateBlocks(entry.getEndIndex(), blocks);
         entry.length -= blocks;
       } else {
         throw new CannotShrinkMoreException("Cannot shrink file more than its length.");
@@ -171,7 +171,7 @@ public class ContiguousAllocation implements AllocationMethod {
 
   // deallocates given number of blocks by assigning 0 to them
   // starts from the end and goes backwards
-  private void deallocate(int start, int length) {
+  private void deallocateBlocks(int start, int length) {
     for (int i = 0; i < length; i++) {
       if (start < i) {
         return;
@@ -202,7 +202,7 @@ public class ContiguousAllocation implements AllocationMethod {
     }
   }
 
-  // shifts the contents of a file back `count` times
+  // shifts the contents of a block back `count` times
   private void shiftBack(int index, int count) {
     for (int i = 0; i < count; i++) {
       swap(index, index - 1);
@@ -210,19 +210,19 @@ public class ContiguousAllocation implements AllocationMethod {
     }
   }
 
-  // returns true if given index is a start of a file
+  // returns true if given index is the start of a file
   private boolean isStartOfFile(int index) {
     return directoryTable.values().contains(index);
   }
 
-  // swaps the values in two indices
+  // swaps the values in two blocks
   private void swap(int i, int j) {
     int temp = storage[i];
     storage[i] = storage[j];
     storage[j] = temp;
   }
 
-  // returns the entry corresponding to the file startign at the given index
+  // returns the entry corresponding to the file starting at the given index
   private ContDirEnt getEntryByStartIndex(int index) {
     for (ContDirEnt entry : directoryTable.values()) {
       if (entry.start == index) {

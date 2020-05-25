@@ -36,7 +36,7 @@ public class Main {
         allocation = new LinkedAllocation(blockSize);
       }
 
-      System.out.println("Executing file: " + file.getName());
+      System.out.println(file.getName());
       for (int i = 0; i < 5; i++) {
         nextFileId = 0;
         Scanner scanner = null;

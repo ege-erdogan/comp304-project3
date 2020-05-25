@@ -41,12 +41,12 @@ public class LinkedAllocation implements AllocationMethod {
     int blocks = (int) Math.ceil((double) bytes / (double) blockSize);
     if (haveSpace(blocks)) {
       // allocate space for file
-      int start = getNextFreeIndex();
+      int start = getFirstFreeIndex();
       directoryEntries.put(id, start);
       int last = start;
       storage[start] = start;
       for (int i = 1; i < blocks; i++) {
-        int nextIndex = getNextFreeIndex();
+        int nextIndex = getFirstFreeIndex();
         fat.put(last, nextIndex);
         storage[nextIndex] = nextIndex;
         last = nextIndex;
@@ -66,7 +66,7 @@ public class LinkedAllocation implements AllocationMethod {
         // perform extension
         int end = getFileEndIndex(id);
         for (int i = 0; i < blocks; i++) {
-          int nextFree = getNextFreeIndex();
+          int nextFree = getFirstFreeIndex();
           fat.put(end, nextFree);
           storage[nextFree] = nextFree;
           end = nextFree;
@@ -138,7 +138,7 @@ public class LinkedAllocation implements AllocationMethod {
   }
 
   // returns the index of the first free block
-  private int getNextFreeIndex() {
+  private int getFirstFreeIndex() {
     for (int i = 0; i < BLOCK_COUNT; i++) {
       if (storage[i] == 0) {
         return i;

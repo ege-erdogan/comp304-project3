@@ -1,0 +1,81 @@
+LINKED
+
+input_1024_200_5_9_9.txt
+Experiment results from file: input_1024_200_5_9_9.txt
+	Total completed operation counts: 
+		Create: 385
+		Extend: 2630
+		Access: 406
+		Shrink: 3606
+	Average operation times (ms): 
+		Create: 0.43636363636363634
+		Extend: 0.28669201520912546
+		Access: 0.0024630541871921183
+		Shrink: 0.004714364947310039
+		TOTAL:  0.13376974526825103
+	Creations rejected:	615
+	Extensions rejected: 4345
+
+input_1024_200_9_0_9.txt
+Experiment results from file: input_1024_200_9_0_9.txt
+	Total completed operation counts: 
+		Create: 825
+		Extend: 0
+		Access: 7510
+		Shrink: 3457
+	Average operation times (ms): 
+		Create: 1.0218181818181817
+		Extend: NaN
+		Access: 2.663115845539281E-4
+		Shrink: 0.0014463407578825572
+		TOTAL:  0.07208276797829037
+	Creations rejected:	175
+	Extensions rejected: 0
+
+input_1024_200_9_0_0.txt
+Experiment results from file: input_1024_200_9_0_0.txt
+	Total completed operation counts: 
+		Create: 121
+		Extend: 0
+		Access: 1849020
+		Shrink: 0
+	Average operation times (ms): 
+		Create: 1.1570247933884297
+		Extend: NaN
+		Access: 0.0014348141177488616
+		Shrink: NaN
+		TOTAL:  0.0015104310596109221
+	Creations rejected:	879
+	Extensions rejected: 0
+
+input_8_600_5_5_0.txt
+Experiment results from file: input_8_600_5_5_0.txt
+	Total completed operation counts: 
+		Create: 204
+		Extend: 193
+		Access: 1935
+		Shrink: 0
+	Average operation times (ms): 
+		Create: 0.4117647058823529
+		Extend: 0.16580310880829016
+		Access: 0.0
+		Shrink: NaN
+		TOTAL:  0.04974271012006861
+	Creations rejected:	2796
+	Extensions rejected: 2582
+
+input_2048_600_5_5_0.txt
+Experiment results from file: input_2048_600_5_5_0.txt
+	Total completed operation counts: 
+		Create: 388
+		Extend: 357
+		Access: 2720
+		Shrink: 0
+	Average operation times (ms): 
+		Create: 0.45618556701030927
+		Extend: 0.17647058823529413
+		Access: 0.0014705882352941176
+		Shrink: NaN
+		TOTAL:  0.07041847041847042
+	Creations rejected:	2612
+	Extensions rejected: 2318

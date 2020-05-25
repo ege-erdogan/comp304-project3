@@ -64,6 +64,7 @@ public class Experiment {
     System.out.println("\t\tExtend: " + getAverageOperationTime("EXTEND"));
     System.out.println("\t\tAccess: " + getAverageOperationTime("ACCESS"));
     System.out.println("\t\tShrink: " + getAverageOperationTime("SHRINK"));
+    System.out.println("\t\tTOTAL:  " + getTotalAverageOperationTime());
     System.out.println("\tCreations rejected:\t" + createsRejected);
     System.out.println("\tExtensions rejected: " + extendsRejected);
     System.out.println();
@@ -71,6 +72,18 @@ public class Experiment {
 
   private double getAverageOperationTime(String operation) {
     return (double) opTimes.get(operation) / (double) opCounts.get(operation);
+  }
+
+  private double getTotalAverageOperationTime() {
+    double sum = 0;
+    double count = 0;
+    for (long time : opTimes.values()) {
+      sum += time;
+    }
+    for (int c : opCounts.values()) {
+      count += c;
+    }
+    return sum / count;
   }
 
 
