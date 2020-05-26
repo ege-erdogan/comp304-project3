@@ -4,13 +4,13 @@
 
 1. When the block size is 1024, considering the total average completed operation time, contiguous allocation is faster in two inputs (`input_1024_200_9_0_9` and `input_1024_200_9_0_0`), and linked allocation is faster in one input (`input_1024_200_5_9_9`). For the inputs which contiguous allocation performed faster with, there are no extend operations. Creation seems to taka a long time in linked allocations. For the input linked allocation performed better with, all operations are present. Contiguous allocation performed worse on all operations, and especially the create and extend operations took longer than other operations. 
 2. (Comparing 2048 and 8-byte block sizes since there is no 32-byte experiment.) With contiguous allocation, there was not much of a difference. Of a total 3000 creation requests, 385 were accepted with with 8-byte blocks and 387 were accepted with 2048-byte blocks. With linked allocation, the difference was higher. 204 requests were accepted with 8-byte blocks, and 388 were accepted with 2048-byte blocks. This is because the FAT requires 250 times more blocks when the block size is 8 bytes compared with 2048 bytes. The extra free space with 2048-byte blocks results in a higher amount of accepted creation requests.
-3. In both cases, the head would need to perform the same number of total seeks, say n, until the desired block. With a FAT however, the total distance, and hence the time of the seeks would be shorter since all of the first n-1 seeks would be in a confined region of the disk. If each block contained a pointer, then the seek distances could be much longer, and take more time. 
-4. When performing defragmentation, the DT should also be updated at the same time. If the DT can entirely be stored in memory, then the updates will be much faster compared to the case when the DT is partly in memory, because there will be no need to access the secondary storage device (to update DT) until the very end.
-5. 
+3. In both cases, the head would need to perform the same number of total seeks, say n, until the desired block. With a FAT however, the total distance, and hence the time of the seeks would be shorter since all of the first n-1 seeks would be in a confined region of the disk containing the FAT. The only long seek is performed to reach the desired block. If each block contained a pointer, then the seek distances could be much longer, and take more time. 
+4. When performing defragmentation, the DT should also be updated at the same time. If the DT can entirely be stored in memory, then the updates will be much faster compared to the case when the DT is partly in memory and partly in secondary storage, because there will be no need to access the secondary storage device (to update DT) until the very end.
+5. Due to external fragmentation, it might be the case that there is enough total space to extend a file, but every block is occupied. Then, if we had memory the size of a single block, we could transfer the contents of the blocks with the highest external fragmentation (less content, more empty space) to memory and free multiple blocks. This would reduce the number of rejected extensions since we would be creating new free blocks. 
 
 ## Explanation
 
-All parts of the project work as expected. Below is an explanation of how the four main functions are implemented for both allocation methods.
+**All parts of the project work as expected**. Below is an explanation of how the four main functions are implemented for both allocation methods.
 
 There is a high number of helper methods to make the main code more readable. I made their names as self-explanatory as possible. Additional information can be found as comments if what they do is unclear. 
 
@@ -33,19 +33,21 @@ IF there is enough total space:
   	for each block after the file's end:
   		shift it back file.length times
   		IF there is enough contiguous space after the end of the file:
-  			PERFORM EXTENSION
+  			PERFORM EXTENSION and return
   	
   	perform compaction
-  	IF can extend file
+  	IF file can be extended
   		PERFORM EXTENSION
     ELSE
     	raise error
     
 ```
 
+The shift back operation at lines 8-9 can also be thought of as moving the file forward one block at a time. 
+
 If there is a contiguous block of space somewhere after the file's end block, then the file will eventually reach that space and the condition at line 10 will be satisfied. Notice that no file remains split after this operation because it terminates when there is empty space after the file. 
 
-If there is enough total space, but not contiguously, then the compaction at line 13 will make sure that that space follows file's end. Since the file is the right-most file after the shifting back, and compaction only moves blocks from high to low indices, it will remain in the end. The single block of empty space will be following the file's end.
+If there is enough total space, but not contiguously, then the condition at line 10 will never be satisfied, but the compaction operation at line 13 will make sure that that space follows the file's end. Since the file is the right-most file after the shifting back, and compaction only moves blocks from high to low indices, it will remain in the end. The single block of empty space will be following the file's end.
 
 **Shrink**: Shrinking is straighforward with contiguous allocation. Given number of blocks at the end of the file are deallocated. An error is raised if the file is shrinked to zero or less length.
 
@@ -66,7 +68,7 @@ In linked allocation, there are two data structures.
 
 ## Results
 
-The results from the experiments are as follow:
+The results from the experiments are as follows:
 
 #### Contiguous Allocation
 

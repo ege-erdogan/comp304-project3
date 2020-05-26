@@ -4,6 +4,7 @@
 */
 
 import java.io.FileNotFoundException;
+import java.util.Arrays;
 import java.util.HashMap;
 
 public class ContiguousAllocation implements AllocationMethod {
@@ -16,7 +17,6 @@ public class ContiguousAllocation implements AllocationMethod {
   // fixed length array representing the secondary storage device
   int[] storage;
 
-  // size of a block in bytes
   private int blockSize;
 
   public ContiguousAllocation(int blockSize) {
@@ -33,7 +33,7 @@ public class ContiguousAllocation implements AllocationMethod {
     int blocks = (int) Math.ceil((double) bytes / (double) blockSize);
     if ((start = haveContiguousSpace(blocks)) == -1) { // no space
       performCompaction();
-      if ((start = haveContiguousSpace(blocks)) == -1) { // still no space after compaction
+      if ((start = haveContiguousSpace(blocks)) == -1) { // still no space after compaction, can't create file
         throw new NotEnoughSpaceException("Not enough space to allocate blocks: " + blockSize);
       }
     }
@@ -63,7 +63,7 @@ public class ContiguousAllocation implements AllocationMethod {
       if (haveTotalSpace(blocks)) {
         if (canExtendFile(id, blocks)) {
           performExtension(entry, blocks);
-        } else {
+        } else { // not enough space after file's end, move file forward
           for (int i = entry.getEndIndex() + 1; i < BLOCK_COUNT; i++) {
             shiftBack(i, entry.length);
             if (isStartOfFile(i)) {
@@ -81,6 +81,7 @@ public class ContiguousAllocation implements AllocationMethod {
           if (canExtendFile(id, blocks)) {
             performExtension(entry, blocks);
           } else {
+            assert false;
             throw new NotEnoughSpaceException("Not enough space to allocate blocks: " + blocks);
           }
         }
@@ -141,13 +142,12 @@ public class ContiguousAllocation implements AllocationMethod {
     return false;
   }
 
-  // returns true if there is enough contiguous space for extension of size length
-  // after the start block
+  // returns true if there is enough contiguous space to extend a file after the file's end
   private boolean canExtendFile(int id, int length) {
     ContDirEnt entry = directoryTable.get(id);
-    for (int i = 0; i < length; i++) {
+    for (int i = 1; i <= length; i++) {
       try {
-        if (storage[entry.getEndIndex() + i + 1] != 0) {
+        if (storage[entry.getEndIndex() + i] != 0) {
           return false;
         }
       } catch (ArrayIndexOutOfBoundsException e) {
@@ -171,6 +171,7 @@ public class ContiguousAllocation implements AllocationMethod {
 
   // deallocates given number of blocks by assigning 0 to them
   // starts from the end and goes backwards
+  // used when shrinking a file, so starting from the end was easier
   private void deallocateBlocks(int start, int length) {
     for (int i = 0; i < length; i++) {
       if (start < i) {
@@ -181,7 +182,7 @@ public class ContiguousAllocation implements AllocationMethod {
   }
 
   // iterates over the storage array from start to end
-  // moves each element back until no more space to go
+  // moves each element back block by block until there is no more empty space
   // this is not adaptive since each element either stays in place or moves to a smaller index
   private void performCompaction() {
     for (int i = 0; i < BLOCK_COUNT; i++) {
@@ -212,7 +213,12 @@ public class ContiguousAllocation implements AllocationMethod {
 
   // returns true if given index is the start of a file
   private boolean isStartOfFile(int index) {
-    return directoryTable.values().contains(index);
+    for (ContDirEnt entry : directoryTable.values()) {
+      if (entry.start == index) {
+        return true;
+      }
+    }
+    return false;
   }
 
   // swaps the values in two blocks
@@ -232,6 +238,7 @@ public class ContiguousAllocation implements AllocationMethod {
     return null;
   }
 
+  // extends the file corresponding to the given entry by the given amount of blocks
   private void performExtension(ContDirEnt entry, int blocks) {
     for (int i = 1; i <= blocks; i++) {
       storage[entry.getEndIndex() + i] = entry.getEndIndex() + i;

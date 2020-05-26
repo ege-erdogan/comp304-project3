@@ -20,12 +20,4 @@ public class ContDirEnt {
     return start + length - 1;
   }
 
-  @Override
-  public String toString() {
-    return "ContDirEnt{" +
-            "start=" + start +
-            ", length=" + length +
-            '}';
-  }
-
 }
