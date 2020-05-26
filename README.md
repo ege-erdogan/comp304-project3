@@ -2,7 +2,7 @@
 
 ## Questions
 
-1. When the block size is 1024, considering the total average completed operation time, contiguous allocation is faster in two inputs (`input_1024_200_9_0_9` and `input_1024_200_9_0_0`), and linked allocation is faster in one input (`input_1024_200_5_9_9`). For the inputs which contiguous allocation performed faster with, there are no extend operations. Creation seems to taka a long time in linked allocations. For the input linked allocation performed better with, all operations are present. Contiguous allocation performed worse on all operations, and especially the create and extend operations took longer than other operations. 
+1. When the block size is 1024, considering the total average completed operation time, contiguous allocation is faster in two inputs (`input_1024_200_9_0_9` and `input_1024_200_9_0_0`), and linked allocation is faster in one input (`input_1024_200_5_9_9`). For the inputs which contiguous allocation performed faster with, there are no extend operations. Creation seems to take a long time in linked allocations. For the input linked allocation performed better with, all operations are performed. Contiguous allocation performed worse on all operations except accessing, and especially the create and extend operations took longer than other operations. Faster access is expected in contiguous allocation because once we know the block offset, we can make a single access to the `storage` array to obtain the block, while with linked allocation, we have to iterate through the FAT.
 2. (Comparing 2048 and 8-byte block sizes since there is no 32-byte experiment.) With contiguous allocation, there was not much of a difference. Of a total 3000 creation requests, 385 were accepted with with 8-byte blocks and 387 were accepted with 2048-byte blocks. With linked allocation, the difference was higher. 204 requests were accepted with 8-byte blocks, and 388 were accepted with 2048-byte blocks. This is because the FAT requires 250 times more blocks when the block size is 8 bytes compared with 2048 bytes. The extra free space with 2048-byte blocks results in a higher amount of accepted creation requests.
 3. In both cases, the head would need to perform the same number of total seeks, say n, until the desired block. With a FAT however, the total distance, and hence the time of the seeks would be shorter since all of the first n-1 seeks would be in a confined region of the disk containing the FAT. The only long seek is performed to reach the desired block. If each block contained a pointer, then the seek distances could be much longer, and take more time. 
 4. When performing defragmentation, the DT should also be updated at the same time. If the DT can entirely be stored in memory, then the updates will be much faster compared to the case when the DT is partly in memory and partly in secondary storage, because there will be no need to access the secondary storage device (to update DT) until the very end.
@@ -76,33 +76,33 @@ The results from the experiments are as follows:
 input_1024_200_5_9_9.txt
 Experiment results from file: input_1024_200_5_9_9.txt
 	Total completed operation counts: 
-		Create: 181
-		Extend: 1070
-		Access: 770
-		Shrink: 1746
+		Create: 384
+		Extend: 2587
+		Access: 850
+		Shrink: 3635
 	Average operation times (ms): 
-		Create: 1.2430939226519337
-		Extend: 0.5345794392523364
-		Access: 0.0012987012987012987
-		Shrink: 0.001718213058419244
-		TOTAL:  0.21263604990708787
-	Creations rejected:	819
-	Extensions rejected: 5905
+		Create: 3.9375
+		Extend: 4.564746810977967
+		Access: 0.001176470588235294
+		Shrink: 5.502063273727648E-4
+		TOTAL:  1.7870171673819744
+	Creations rejected:	616
+	Extensions rejected: 4388
 
 input_1024_200_9_0_9.txt
 Experiment results from file: input_1024_200_9_0_9.txt
 	Total completed operation counts: 
-		Create: 724
+		Create: 821
 		Extend: 0
 		Access: 8025
-		Shrink: 3112
+		Shrink: 3429
 	Average operation times (ms): 
-		Create: 0.7486187845303868
+		Create: 0.7661388550548112
 		Extend: NaN
-		Access: 0.0
+		Access: 1.2461059190031152E-4
 		Shrink: 0.0
-		TOTAL:  0.04569597841665964
-	Creations rejected:	276
+		TOTAL:  0.05132382892057027
+	Creations rejected:	179
 	Extensions rejected: 0
 
 input_1024_200_9_0_0.txt
@@ -113,11 +113,11 @@ Experiment results from file: input_1024_200_9_0_0.txt
 		Access: 1837350
 		Shrink: 0
 	Average operation times (ms): 
-		Create: 0.01639344262295082
+		Create: 0.00819672131147541
 		Extend: NaN
-		Access: 4.8983590497183446E-5
+		Access: 4.680654203064196E-5
 		Shrink: NaN
-		TOTAL:  5.0068790163877324E-5
+		TOTAL:  4.73476602636666E-5
 	Creations rejected:	878
 	Extensions rejected: 0
 
@@ -129,11 +129,11 @@ Experiment results from file: input_8_600_5_5_0.txt
 		Access: 2755
 		Shrink: 0
 	Average operation times (ms): 
-		Create: 0.0025974025974025974
-		Extend: 4.15819209039548
+		Create: 0.007792207792207792
+		Extend: 7.3841807909604515
 		Access: 3.629764065335753E-4
 		Shrink: NaN
-		TOTAL:  0.42186605609616484
+		TOTAL:  0.7492844876931883
 	Creations rejected:	2615
 	Extensions rejected: 2421
 
@@ -145,11 +145,11 @@ Experiment results from file: input_2048_600_5_5_0.txt
 		Access: 2750
 		Shrink: 0
 	Average operation times (ms): 
-		Create: 0.0
-		Extend: 4.350282485875706
-		Access: 7.272727272727272E-4
+		Create: 0.007751937984496124
+		Extend: 6.161016949152542
+		Access: 3.636363636363636E-4
 		Shrink: NaN
-		TOTAL:  0.44170724720710397
+		TOTAL:  0.6258951589802348
 	Creations rejected:	2613
 	Extensions rejected: 2321
 ```
